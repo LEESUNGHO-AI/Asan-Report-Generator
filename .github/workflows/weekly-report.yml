@@ -1,44 +1,24 @@
 name: 주간 진도 보고서 자동 생성
-
 on:
   schedule:
-    - cron: "0 8 * * 5"  # 매주 금요일 17:00 KST (08:00 UTC)
+    - cron: "0 8 * * 5"
   workflow_dispatch:
-
 jobs:
   generate:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
     permissions:
       contents: write
-
     steps:
-      - name: 📥 저장소 체크아웃
-        uses: actions/checkout@v4
-
-      - name: 📦 Node.js 설정
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: 📦 docx 패키지 설치
-        run: npm install docx
-
-      - name: 📄 주간 보고서 생성 (Claude AI 분석)
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: npm install docx
+      - run: node scripts/generate_weekly_report.js
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: node scripts/generate_weekly_report.js
-
-      - name: 📤 보고서 커밋 & 푸시
-        run: |
+      - run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add reports/
-          if git diff --cached --quiet; then
-            echo "ℹ️ 변경사항 없음"
-          else
-            git commit -m "📋 주간 보고서 자동 생성 $(date +'%Y-%m-%d' -d '+9 hours') KST"
-            git push
-            echo "✅ 푸시 완료"
-          fi
+          git diff --cached --quiet || (git commit -m "📋 주간 보고서 $(date +'%Y-%m-%d' -d '+9 hours')" && git push)
