@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>아산시 스마트시티 | 보고서 생성 시스템</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<style>
+:root{--bg:#08090f;--card:#111820;--card2:#161f2b;--bdr:#1e2a3a;--t1:#e6edf3;--t2:#7d8ca3;--accent:#00d4aa;--accent2:#7B61FF;--blue:#3b82f6;--red:#ef4444;--amber:#f59e0b;--green:#22c55e;--glow:rgba(0,212,170,.08)}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh}
+.bg{position:fixed;inset:0;z-index:-1;background:radial-gradient(circle at 10% 90%,var(--glow),transparent 50%),radial-gradient(circle at 90% 10%,rgba(123,97,255,.05),transparent 50%),var(--bg)}
+header{background:rgba(17,24,32,.95);border-bottom:1px solid var(--bdr);padding:1rem 2rem;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+.hc{max-width:1400px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem}
+.logo{display:flex;align-items:center;gap:.8rem}
+.logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.logo h1{font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,var(--accent),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo p{font-size:.72rem;color:var(--t2)}
+.hbadge{display:flex;gap:.5rem;align-items:center}
+.hbadge span{font-size:.68rem;padding:3px 10px;border-radius:20px;border:1px solid var(--bdr);color:var(--t2)}
+.hbadge .live{border-color:var(--green);color:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+main{max-width:1400px;margin:0 auto;padding:1.5rem 2rem 3rem}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:1.2rem;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px}
+.kpi.a::before{background:var(--blue)}.kpi.b::before{background:var(--accent2)}.kpi.c::before{background:var(--amber)}.kpi.d::before{background:var(--red)}
+.kpi-label{font-size:.75rem;color:var(--t2);margin-bottom:.3rem}
+.kpi-val{font-size:1.8rem;font-weight:800}
+.kpi.a .kpi-val{color:var(--blue)}.kpi.b .kpi-val{color:var(--accent2)}.kpi.c .kpi-val{color:var(--amber)}.kpi.d .kpi-val{color:var(--red)}
+.kpi-sub{font-size:.72rem;color:var(--t2);margin-top:.2rem}
+.stitle{font-size:1rem;font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.report-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem}
+@media(max-width:700px){.report-grid{grid-template-columns:1fr}}
+.rcard{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:1.5rem;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.rcard:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.rcard.selected{border-color:var(--accent);box-shadow:0 0 20px var(--glow)}
+.rcard::after{content:'';position:absolute;top:0;left:0;width:4px;height:100%;border-radius:0 2px 2px 0}
+.rcard:nth-child(1)::after{background:var(--green)}.rcard:nth-child(2)::after{background:var(--blue)}.rcard:nth-child(3)::after{background:var(--accent2)}.rcard:nth-child(4)::after{background:var(--amber)}
+.rcard-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.8rem}
+.rcard-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+.rcard:nth-child(1) .rcard-icon{background:rgba(34,197,94,.12)}.rcard:nth-child(2) .rcard-icon{background:rgba(59,130,246,.12)}.rcard:nth-child(3) .rcard-icon{background:rgba(123,97,255,.12)}.rcard:nth-child(4) .rcard-icon{background:rgba(245,158,11,.12)}
+.rcard-badge{font-size:.65rem;padding:2px 8px;border-radius:12px;border:1px solid var(--bdr);color:var(--t2)}
+.rcard h3{font-size:.95rem;font-weight:700;margin-bottom:.3rem}
+.rcard p{font-size:.75rem;color:var(--t2);line-height:1.5}
+.rcard-meta{display:flex;gap:1rem;margin-top:.8rem;font-size:.7rem;color:var(--t2)}
+.gen-section{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:1.5rem;margin-bottom:1.5rem}
+.gen-options{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem}
+.gen-options label{font-size:.8rem;color:var(--t2);display:flex;align-items:center;gap:.4rem;cursor:pointer}
+.gen-options input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px}
+.gen-btn{background:linear-gradient(135deg,var(--accent),#00a88a);color:#000;border:none;padding:.8rem 2rem;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:.5rem}
+.gen-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,212,170,.3)}
+.gen-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.gen-btn.loading .spinner{display:block}.gen-btn.loading .btn-text{display:none}
+.spinner{width:16px;height:16px;border:2px solid rgba(0,0,0,.2);border-top-color:#000;border-radius:50%;animation:spin .6s linear infinite;display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.status{margin-top:1rem;font-size:.78rem;color:var(--t2);line-height:1.8;max-height:200px;overflow-y:auto;padding:.8rem;background:var(--card2);border-radius:8px;font-family:monospace;display:none}
+.status.show{display:block}.status .ok{color:var(--green)}.status .warn{color:var(--amber)}.status .err{color:var(--red)}.status .ai{color:var(--accent2)}
+.settings{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:1.5rem;margin-bottom:1.5rem}
+.settings summary{cursor:pointer;font-size:.85rem;font-weight:600;color:var(--t2);list-style:none;display:flex;align-items:center;gap:.5rem}
+.settings summary::before{content:'';display:block;width:0;height:0;border-left:5px solid var(--t2);border-top:4px solid transparent;border-bottom:4px solid transparent;transition:transform .2s}
+.settings[open] summary::before{transform:rotate(90deg)}
+.settings-body{margin-top:1rem;display:flex;flex-direction:column;gap:.8rem}
+.input-group{display:flex;flex-direction:column;gap:.3rem}
+.input-group label{font-size:.75rem;color:var(--t2)}
+.input-group input{background:var(--card2);border:1px solid var(--bdr);border-radius:8px;padding:.5rem .8rem;color:var(--t1);font-size:.8rem;outline:none;width:100%;max-width:500px}
+.input-group input:focus{border-color:var(--accent)}
+.input-group .hint{font-size:.65rem;color:var(--t2);opacity:.7}
+.history{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:1.5rem}
+.hist-item{display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--bdr);font-size:.78rem}
+.hist-item:last-child{border-bottom:none}.hist-name{font-weight:600}.hist-date{color:var(--t2)}
+footer{text-align:center;padding:2rem;font-size:.7rem;color:var(--t2);border-top:1px solid var(--bdr)}
+</style>
+</head><body>
+<div class="bg"></div>
+<header><div class="hc"><div class="logo"><div class="logo-icon">📋</div><div><h1>보고서 생성 시스템</h1><p>아산시 강소형 스마트시티 조성사업</p></div></div><div class="hbadge"><span class="live" id="dataStatus">로딩 중...</span><span id="lastUpdate">-</span></div></div></header>
+<main>
+<div class="kpi-grid">
+  <div class="kpi a"><div class="kpi-label">예산 집행률</div><div class="kpi-val" id="k1">-</div><div class="kpi-sub" id="k1s">-</div></div>
+  <div class="kpi b"><div class="kpi-label">WBS 공정률</div><div class="kpi-val" id="k2">-</div><div class="kpi-sub" id="k2s">-</div></div>
+  <div class="kpi c"><div class="kpi-label">기간 소진율</div><div class="kpi-val" id="k3">-</div><div class="kpi-sub" id="k3s">-</div></div>
+  <div class="kpi d"><div class="kpi-label">D-Day</div><div class="kpi-val" id="k4">-</div><div class="kpi-sub" id="k4s">-</div></div>
+</div>
+<div class="stitle">📄 보고서 유형 선택</div>
+<div class="report-grid" id="rg">
+  <div class="rcard selected" data-type="weekly" onclick="sel(this)"><div class="rcard-head"><div class="rcard-icon">📋</div><span class="rcard-badge">매주 금요일</span></div><h3>주간 진도 보고서</h3><p>금주 성과, 예산 집행, WBS 공정률, AI 이슈 분석, 차주 계획</p><div class="rcard-meta"><span>PMO 내부</span><span>AI 분석 포함</span></div></div>
+  <div class="rcard" data-type="monthly" onclick="sel(this)"><div class="rcard-head"><div class="rcard-icon">🏛️</div><span class="rcard-badge">익월 5일</span></div><h3>월별 관리카드</h3><p>국토부 제출, 재원별/비목별 집행, 세부사업별 현황</p><div class="rcard-meta"><span>국토교통부</span><span>표준양식</span></div></div>
+  <div class="rcard" data-type="quarter" onclick="sel(this)"><div class="rcard-head"><div class="rcard-icon">📊</div><span class="rcard-badge">분기종료+15일</span></div><h3>분기 보고서</h3><p>분기 실적, 성과지표 달성, Level-1 WBS 상세</p><div class="rcard-meta"><span>국토교통부</span><span>성과지표</span></div></div>
+  <div class="rcard" data-type="annual" onclick="sel(this)"><div class="rcard-head"><div class="rcard-icon">📈</div><span class="rcard-badge">익년 1/31</span></div><h3>연간 성과보고서</h3><p>연간 종합, 추진체계, 성과 분석</p><div class="rcard-meta"><span>국토교통부</span><span>종합 성과</span></div></div>
+</div>
+<div class="gen-section">
+  <div class="gen-options"><label><input type="checkbox" id="useAI" checked> Claude AI 분석</label><label><input type="checkbox" id="incDel" checked> 지연 작업 부록</label></div>
+  <button class="gen-btn" id="gb" onclick="gen()"><span class="spinner"></span><span class="btn-text">📄 보고서 생성 및 다운로드</span></button>
+  <div class="status" id="sl"></div>
+</div>
+<details class="settings"><summary>⚙️ 설정</summary><div class="settings-body">
+  <div class="input-group"><label>Anthropic API Key</label><input type="password" id="ak" placeholder="sk-ant-api03-..."><span class="hint">브라우저에 저장. 없으면 Fallback 분석 사용</span></div>
+  <button style="align-self:flex-start;background:var(--accent);color:#000;border:none;padding:.4rem 1rem;border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer" onclick="localStorage.setItem('ak',document.getElementById('ak').value);log('ok','✅ 저장 완료')">저장</button>
+</div></details>
+<div class="history"><div class="stitle">🗂️ 생성 이력</div><div id="hl"></div></div>
+</main>
+<footer>아산시 강소형 스마트시티 조성사업 | 보고서 생성 시스템 v3.0 | 제일엔지니어링 PMO팀<br>BMS + WBS 실시간 · Claude AI · DOCX 자동 생성</footer>
+<script>
+let S={bms:null,ws:null,wd:null,type:'weekly',busy:false};
+const BU="https://leesungho-ai.github.io/Asan-Smart-City-Budget-Management-System-BMS-/data/budget.json",
+WU="https://leesungho-ai.github.io/Asan-Smartcity-WBS/data/summary-data.json",
+WD="https://leesungho-ai.github.io/Asan-Smartcity-WBS/data/wbs-data.json",
+PS=new Date("2023-12-01"),PE=new Date("2026-12-31");
+const BM={"스마트 공공 WIFI":1,"아산시 강소형 스마트시티 네트워크 구축":1,"모바일 전자시민증 플랫폼 / 인프라":2,"데이터기반 AI 융복합 서비스 구축":2,"디지털 노마드접수/운영 및 거래관리":2,"국제표준 디지털링크 공유 플랫폼":2,"이노베이션 센터/ 관제 시스템 구축":3,"디지털 OASIS SPOT":4,"무인매장":4,"SDDC Platform 구축":5,"AI통합관제 및 운영 플랫폼 / 인프라":6,"디지털OASIS 정보관리 시스템":7,"수요응답형 DRT 서비스 운영 플랫폼 구축":8,"수요응답형 DRT 서비스 운영 HW 구축":8,"정보통신감리":9,"스마트폴&디스플레이":10,"메타버스 플랫폼":11};
+const NM={1:"유무선 네트워크 구축",2:"서비스 인프라 플랫폼",3:"이노베이션 센터 구축",4:"디지털 OASIS SPOT",5:"SDDC Platform 구축",6:"AI 통합관제 플랫폼",7:"디지털 OASIS 정보관리",8:"DRT 수요응답형 교통",9:"감리용역",10:"스마트폴&디스플레이",11:"메타버스 플랫폼"};
+window.addEventListener('load',async()=>{document.getElementById('ak').value=localStorage.getItem('ak')||'';loadH();await loadD()});
+function sel(e){document.querySelectorAll('.rcard').forEach(c=>c.classList.remove('selected'));e.classList.add('selected');S.type=e.dataset.type}
+async function loadD(){log('info','📦 데이터 수집 중...');try{const[b,w,d]=await Promise.all([fetch(BU).then(r=>r.json()),fetch(WU).then(r=>r.json()),fetch(WD).then(r=>r.json())]);S.bms=b;S.ws=w;S.wd=d;upK();document.getElementById('dataStatus').textContent='● 실시간';document.getElementById('lastUpdate').textContent=new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}).slice(0,16);log('ok','✅ 데이터 로드 완료')}catch(e){document.getElementById('dataStatus').textContent='⚠️ 오류';log('err','❌ '+e.message)}}
+function upK(){const s=S.bms.summary,t=S.ws.total,n=new Date(),dd=Math.ceil((PE-n)/864e5),el=Math.ceil((n-PS)/864e5),tt=Math.ceil((PE-PS)/864e5),tp=(el/tt*100).toFixed(1);
+  document.getElementById('k1').textContent=s["전체집행률"].toFixed(1)+'%';document.getElementById('k1s').textContent=`${(s["총집행액"]/1e8).toFixed(1)}억 / ${(s["총사업비"]/1e8).toFixed(0)}억`;
+  document.getElementById('k2').textContent=t.actualRate+'%';document.getElementById('k2s').textContent=`완료 ${t.done} / ${t.total}건`;
+  document.getElementById('k3').textContent=tp+'%';document.getElementById('k3s').textContent=`${el}일 / ${tt}일`;
+  document.getElementById('k4').textContent='D-'+dd;document.getElementById('k4s').textContent=`잔여 ${dd}일`}
+function pBMS(b){const s=b.summary,CL={"인건비(110)":"인건비","운영비(210)":"운영비","여비(220)":"여비","연구개발비(260)":"연구개발비","사업비배분(320)":"사업비배분","사업비 배분(320)":"사업비배분","유형자산(430)":"유형자산","무형자산(440)":"무형자산(SW)","건설비(420)":"건설비","기타":"기타"};
+  const mg={};for(const x of b.bimok_summary||[]){const n=CL[x["비목"]]||x["비목"];if(!mg[n])mg[n]={b:0,e:0};mg[n].b+=(x["예산"]||0)/1e8;mg[n].e+=(x["집행"]||0)/1e8}
+  const cats=[];for(const n of["인건비","운영비","여비","연구개발비","유형자산","무형자산(SW)","건설비","사업비배분","기타"])if(mg[n])cats.push({name:n,budget:mg[n].b.toFixed(1),exec:mg[n].e.toFixed(2),rate:mg[n].b?(mg[n].e/mg[n].b*100).toFixed(1):"0.0"});
+  const u={};let cB=0,cE=0;for(const it of b.items||[]){const num=BM[it["항목명"]],ex=it["집행액"]||it["사용금액합계"]||it["사용금액"]||0;if(num){if(!u[num])u[num]={b:0,e:0};u[num].b+=(it["총예산"]||0)/1e8;u[num].e+=ex/1e8}else{cB+=(it["총예산"]||0)/1e8;cE+=ex/1e8}}
+  const prj=[];for(const n of Object.keys(NM).map(Number).sort((a,b)=>a-b)){const x=u[n]||{b:0,e:0};prj.push({num:n,name:NM[n],budget:x.b.toFixed(2),exec:x.e.toFixed(2),rate:x.b?(x.e/x.b*100).toFixed(1):"0.0"})}
+  return{totalBudget:(s["총사업비"]||0)/1e8,totalExec:(s["총집행액"]||0)/1e8,totalRemain:(s["총잔액"]||0)/1e8,execRate:s["전체집행률"]||0,cats,projects:prj,commonB:cB,commonE:cE}}
+function pWBS(ws,wd){const t=ws.total,sv=[];for(const r of wd.items||[])if(r.level==="1"&&r.weight>0)sv.push({name:r.name,weight:r.weight,planned:r.plannedRate,actual:r.actualRate,deviation:r.deviation});sv.sort((a,b)=>b.actual-a.actual);
+  const dl=(wd.items||[]).filter(r=>r.status==="지연"&&r.level!=="1");return{overall:{total:t.total,done:t.done,inProg:t.inProg,delayed:t.delayed,waiting:t.waiting,actualRate:t.actualRate,achieveRate:t.achieveRate},svcs:sv,delayed:dl}}
+async function getAI(bd,wr){const k=localStorage.getItem('ak');if(!k){log('warn','⚠️ API Key 없음');return null}log('ai','🤖 Claude AI...');
+  const n=new Date(),dd=Math.ceil((PE-n)/864e5),el=Math.ceil((n-PS)/864e5),tt=Math.ceil((PE-PS)/864e5),tp=(el/tt*100).toFixed(1);
+  const p=`아산시 스마트시티(240억,2023.12~2026.12) PMO 전문가. 집행률${bd.execRate}%(${bd.totalExec.toFixed(1)}억/240억),WBS${wr.overall.actualRate}%,기간${tp}%,D-${dd},지연${wr.delayed.length}건. 단위사업:${bd.projects.map(x=>`#${x.num}${x.name}(${x.rate}%)`).join(",")}. JSON만:{"executive_summary":"4문장","key_achievements":["3개"],"risk_analysis":[{"level":"긴급|주의","title":"","description":"","action":""}],"budget_insight":"3문장","wbs_insight":"3문장","next_week_plan":["3개"],"recommendations":["3개"]}`;
+  try{const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":k,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:3000,messages:[{role:"user",content:p}]})});
+    const d=await r.json();if(d.content?.[0]?.text){const j=JSON.parse(d.content[0].text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());log('ai','✅ AI 완료');return j}return null}catch(e){log('err','❌ AI: '+e.message);return null}}
+function fbAI(bd,wr){const n=new Date(),dd=Math.ceil((PE-n)/864e5),el=Math.ceil((n-PS)/864e5),tt=Math.ceil((PE-PS)/864e5),tp=(el/tt*100).toFixed(1),gap=(tp-bd.execRate).toFixed(0);
+  return{executive_summary:`집행률 ${bd.execRate}%, WBS ${wr.overall.actualRate}%. 기간소진율(${tp}%) 대비 ${gap}%p 부족. D-${dd}.`,key_achievements:["BMS/WBS 동기화 운영","통합 포털 현행화","보고서 시스템 가동"],
+    risk_analysis:[{level:"긴급",title:`집행 격차 ${gap}%p`,description:"기간 대비 부족",action:"발주 가속"},{level:"주의",title:`지연 ${wr.delayed.length}건`,description:"실적 미달",action:"만회 계획"}],
+    budget_insight:`240억 중 ${bd.totalExec.toFixed(1)}억(${bd.execRate}%). 잔여 ${bd.totalRemain.toFixed(1)}억, 월 ${(bd.totalRemain/(dd/30)).toFixed(1)}억 필요.`,
+    wbs_insight:`${wr.overall.total}건 중 완료 ${wr.overall.done}, 지연 ${wr.overall.delayed}건.`,next_week_plan:["발주 진행","지연 만회","집행 점검"],recommendations:["대형사업 발주 가속","비목 전용 검토","준공 로드맵 재설정"]}}
+async function gen(){if(S.busy||!S.bms)return;S.busy=true;const b=document.getElementById('gb');b.classList.add('loading');document.getElementById('sl').classList.add('show');
+  try{log('info',`📋 ${S.type} 생성 시작...`);const bd=pBMS(S.bms),wr=pWBS(S.ws,S.wd);log('ok',`집행률 ${bd.execRate}%, WBS ${wr.overall.actualRate}%`);
+    let ai=null;if(document.getElementById('useAI').checked)ai=await getAI(bd,wr);if(!ai){ai=fbAI(bd,wr);log('warn','Fallback 사용')}
+    log('info','📄 DOCX 생성 중...');const doc=bDoc(S.type,bd,wr,ai);const blob=await docx.Packer.toBlob(doc);
+    const tl={weekly:'주간진도보고서',monthly:'월별관리카드',quarter:'분기보고서',annual:'연간성과보고서'};const td=new Date().toISOString().slice(0,10);const fn=`${tl[S.type]}_${td}.docx`;
+    saveAs(blob,fn);log('ok',`✅ ${fn} (${(blob.size/1024).toFixed(0)}KB)`);addH(fn,S.type)}catch(e){log('err','❌ '+e.message);console.error(e)}finally{S.busy=false;b.classList.remove('loading')}}
+function bDoc(type,bms,wbs,ai){const{Document:D,Paragraph:P,TextRun:T,Table:Tb,TableRow:TR,TableCell:TC,Header:H,Footer:F,AlignmentType:A,HeadingLevel:HL,BorderStyle:BS,WidthType:WT,ShadingType:ST,LevelFormat:LF,PageBreak:PB,PageNumber:PN}=docx;
+  const TW=9026,td=new Date().toISOString().slice(0,10);const n=new Date(),dd=Math.ceil((PE-n)/864e5),el=Math.ceil((n-PS)/864e5),tt=Math.ceil((PE-PS)/864e5),tp=(el/tt*100).toFixed(1);
+  const br={style:BS.SINGLE,size:1,color:"BBBBBB"},bo={top:br,bottom:br,left:br,right:br},cm={top:60,bottom:60,left:100,right:100},hs={fill:"1B3A5C",type:ST.CLEAR},alt={fill:"F0F5FA",type:ST.CLEAR};
+  const hC=(t,w)=>new TC({borders:bo,width:{size:w,type:WT.DXA},shading:hs,margins:cm,verticalAlign:"center",children:[new P({alignment:A.CENTER,children:[new T({text:t,bold:true,font:"맑은 고딕",size:18,color:"FFFFFF"})]})]});
+  const dC=(t,w,o={})=>new TC({borders:bo,width:{size:w,type:WT.DXA},margins:cm,shading:o.shade?alt:undefined,verticalAlign:"center",children:[new P({alignment:o.align||A.LEFT,children:[new T({text:String(t),font:"맑은 고딕",size:18,bold:o.bold,color:o.color})]})]});
+  const rc=v=>parseFloat(v)>=80?"00B050":(parseFloat(v)>=30?"ED7D31":"C00000");
+  const tts={weekly:"주간 진도 보고서",monthly:"월별 관리카드",quarter:"분기 보고서",annual:"연간 성과보고서"};const ch=[];
+  ch.push(new P({spacing:{before:1800}}));ch.push(new P({alignment:A.CENTER,children:[new T({text:"아산시 강소형 스마트시티 조성사업",font:"맑은 고딕",size:40,bold:true,color:"1B3A5C"})]}));
+  ch.push(new P({spacing:{before:200},alignment:A.CENTER,children:[new T({text:tts[type],font:"맑은 고딕",size:52,bold:true,color:"1B3A5C"})]}));
+  ch.push(new P({spacing:{before:400},alignment:A.CENTER,children:[new T({text:`작성일: ${td}`,font:"맑은 고딕",size:24,color:"888888"})]}));
+  if(type!=='weekly'){const ic=[3000,6026];ch.push(new P({spacing:{before:400}}));ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:ic,rows:[
+    new TR({children:[hC("사업명",ic[0]),dC("아산시 강소형 스마트시티 조성사업",ic[1],{bold:true})]}),new TR({children:[hC("사업기간",ic[0]),dC("2023.12 ~ 2026.12",ic[1])]}),
+    new TR({children:[hC("총사업비",ic[0]),dC("240억원 (국비120 · 도비28.8 · 시비91.2)",ic[1])]}),new TR({children:[hC("제출일",ic[0]),dC(td,ic[1])]})]}))}
+  ch.push(new P({spacing:{before:800},alignment:A.CENTER,children:[new T({text:"제일엔지니어링 PMO팀",font:"맑은 고딕",size:24,color:"444444"})]}));ch.push(new P({children:[new PB()]}));
+  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"Executive Summary",font:"맑은 고딕"})]}));
+  ch.push(new P({spacing:{after:120},children:[new T({text:ai.executive_summary,font:"맑은 고딕",size:20})]}));
+  const kC=[2256,2256,2258,2256];ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:kC,rows:[
+    new TR({children:[hC("예산 집행률",kC[0]),hC("WBS 공정률",kC[1]),hC("기간 소진율",kC[2]),hC("D-Day",kC[3])]}),
+    new TR({children:[dC(`${bms.execRate}%`,kC[0],{align:A.CENTER,bold:true,color:"2E75B6"}),dC(`${wbs.overall.actualRate}%`,kC[1],{align:A.CENTER,bold:true,color:"7030A0"}),dC(`${tp}%`,kC[2],{align:A.CENTER,bold:true,color:"ED7D31"}),dC(`D-${dd}`,kC[3],{align:A.CENTER,bold:true,color:"C00000"})]})]}));ch.push(new P({spacing:{after:200}}));
+  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"예산 집행 현황",font:"맑은 고딕"})]}));
+  if(ai.budget_insight)ch.push(new P({spacing:{after:120},shading:{fill:"E8F4FD",type:ST.CLEAR},children:[new T({text:"💡 "+ai.budget_insight,font:"맑은 고딕",size:18,color:"0C5460"})]}));
+  const cC=[2000,1800,1800,1800,1626];ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:cC,rows:[new TR({children:[hC("비목",cC[0]),hC("예산",cC[1]),hC("집행",cC[2]),hC("잔액",cC[3]),hC("집행률",cC[4])]}),
+    ...bms.cats.map((c,i)=>{const rm=(parseFloat(c.budget)-parseFloat(c.exec)).toFixed(1);return new TR({children:[dC(c.name,cC[0],{bold:true,shade:i%2===1}),dC(c.budget,cC[1],{align:A.RIGHT,shade:i%2===1}),dC(c.exec,cC[2],{align:A.RIGHT,shade:i%2===1}),dC(rm,cC[3],{align:A.RIGHT,shade:i%2===1}),dC(`${c.rate}%`,cC[4],{align:A.CENTER,bold:true,color:rc(c.rate),shade:i%2===1})]})})]}));ch.push(new P({spacing:{after:200}}));
+  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"단위사업별 현황",font:"맑은 고딕"})]}));
+  const pC=[500,2800,1300,1300,1300,1826];ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:pC,rows:[new TR({children:[hC("#",pC[0]),hC("사업명",pC[1]),hC("예산",pC[2]),hC("집행",pC[3]),hC("잔액",pC[4]),hC("집행률",pC[5])]}),
+    ...bms.projects.map((p,i)=>{const rm=(parseFloat(p.budget)-parseFloat(p.exec)).toFixed(1);return new TR({children:[dC(p.num,pC[0],{align:A.CENTER,shade:i%2===1}),dC(p.name,pC[1],{bold:true,shade:i%2===1}),dC(p.budget,pC[2],{align:A.RIGHT,shade:i%2===1}),dC(p.exec,pC[3],{align:A.RIGHT,shade:i%2===1}),dC(rm,pC[4],{align:A.RIGHT,shade:i%2===1}),dC(`${p.rate}%`,pC[5],{align:A.CENTER,bold:true,color:rc(p.rate),shade:i%2===1})]})})]}));ch.push(new P({children:[new PB()]}));
+  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"WBS 공정률",font:"맑은 고딕"})]}));
+  if(ai.wbs_insight)ch.push(new P({spacing:{after:120},shading:{fill:"E8F4FD",type:ST.CLEAR},children:[new T({text:"💡 "+ai.wbs_insight,font:"맑은 고딕",size:18,color:"0C5460"})]}));
+  const wC=[1504,1504,1506,1504,1504,1504];ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:wC,rows:[new TR({children:[hC("전체",wC[0]),hC("완료",wC[1]),hC("진행",wC[2]),hC("지연",wC[3]),hC("대기",wC[4]),hC("달성률",wC[5])]}),
+    new TR({children:[dC(`${wbs.overall.total}건`,wC[0],{align:A.CENTER,bold:true}),dC(`${wbs.overall.done}건`,wC[1],{align:A.CENTER,bold:true,color:"00B050"}),dC(`${wbs.overall.inProg}건`,wC[2],{align:A.CENTER,bold:true,color:"2E75B6"}),dC(`${wbs.overall.delayed}건`,wC[3],{align:A.CENTER,bold:true,color:"C00000"}),dC(`${wbs.overall.waiting}건`,wC[4],{align:A.CENTER,bold:true,color:"ED7D31"}),dC(`${wbs.overall.achieveRate}%`,wC[5],{align:A.CENTER,bold:true,color:"7030A0"})]})]}));
+  if(type!=='weekly'&&wbs.svcs.length){ch.push(new P({spacing:{before:200},heading:HL.HEADING_2,children:[new T({text:"Level-1 공정률",font:"맑은 고딕"})]}));const sC=[3200,1200,1500,1500,1626];
+    ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:sC,rows:[new TR({children:[hC("분류",sC[0]),hC("가중치",sC[1]),hC("계획",sC[2]),hC("실적",sC[3]),hC("편차",sC[4])]}),
+      ...wbs.svcs.map((s,i)=>{const dc=s.deviation>=0?"00B050":"C00000";return new TR({children:[dC(s.name,sC[0],{bold:true,shade:i%2===1}),dC(`${s.weight}%`,sC[1],{align:A.CENTER,shade:i%2===1}),dC(`${s.planned}%`,sC[2],{align:A.CENTER,shade:i%2===1}),dC(`${s.actual}%`,sC[3],{align:A.CENTER,bold:true,shade:i%2===1}),dC(`${s.deviation>0?"+":""}${s.deviation}%p`,sC[4],{align:A.CENTER,bold:true,color:dc,shade:i%2===1})]})})]}));}
+  ch.push(new P({spacing:{after:200}}));ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"리스크 분석",font:"맑은 고딕"})]}));
+  if(ai.risk_analysis?.length){const rC=[1000,2500,3200,2326];ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:rC,rows:[new TR({children:[hC("수준",rC[0]),hC("리스크",rC[1]),hC("상세",rC[2]),hC("대응",rC[3])]}),
+    ...ai.risk_analysis.map((r,i)=>{const lc=r.level==="긴급"?"C00000":"ED7D31";return new TR({children:[dC(r.level,rC[0],{align:A.CENTER,bold:true,color:lc,shade:i%2===1}),dC(r.title,rC[1],{bold:true,shade:i%2===1}),dC(r.description,rC[2],{shade:i%2===1}),dC(r.action,rC[3],{shade:i%2===1})]})})]}));}
+  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"향후 계획",font:"맑은 고딕"})]}));
+  for(const x of ai.next_week_plan||[])ch.push(new P({numbering:{reference:"bullets",level:0},children:[new T({text:x,font:"맑은 고딕",size:20})]}));
+  ch.push(new P({spacing:{before:200},heading:HL.HEADING_2,children:[new T({text:"PMO 권고사항",font:"맑은 고딕"})]}));
+  for(const x of ai.recommendations||[])ch.push(new P({numbering:{reference:"bullets",level:0},children:[new T({text:x,font:"맑은 고딕",size:20})]}));
+  if(document.getElementById('incDel').checked&&wbs.delayed.length){ch.push(new P({children:[new PB()]}));ch.push(new P({heading:HL.HEADING_1,children:[new T({text:`[부록] 지연 작업 (${wbs.delayed.length}건)`,font:"맑은 고딕"})]}));
+    const dL=[3500,2500,1500,1526];ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:dL,rows:[new TR({children:[hC("작업명",dL[0]),hC("대분류",dL[1]),hC("담당",dL[2]),hC("편차",dL[3])]}),
+      ...wbs.delayed.slice(0,15).map((d,i)=>new TR({children:[dC(d.name,dL[0],{shade:i%2===1}),dC(d.category||"-",dL[1],{shade:i%2===1}),dC(d.organization||"-",dL[2],{shade:i%2===1}),dC(`${d.deviation}%p`,dL[3],{align:A.CENTER,bold:true,color:"C00000",shade:i%2===1})]}))]}));}
+  return new D({numbering:{config:[{reference:"bullets",levels:[{level:0,format:LF.BULLET,text:"\u2022",alignment:A.LEFT,style:{paragraph:{indent:{left:720,hanging:360}}}}]}]},
+    styles:{default:{document:{run:{font:"맑은 고딕",size:20}}},paragraphStyles:[
+      {id:"Heading1",name:"Heading 1",basedOn:"Normal",next:"Normal",quickFormat:true,run:{size:28,bold:true,font:"맑은 고딕",color:"1B3A5C"},paragraph:{spacing:{before:360,after:120},outlineLevel:0}},
+      {id:"Heading2",name:"Heading 2",basedOn:"Normal",next:"Normal",quickFormat:true,run:{size:24,bold:true,font:"맑은 고딕",color:"2E75B6"},paragraph:{spacing:{before:240,after:100},outlineLevel:1}}]},
+    sections:[{properties:{page:{size:{width:11906,height:16838},margin:{top:1440,bottom:1440,left:1440,right:1440}}},
+      headers:{default:new H({children:[new P({alignment:A.RIGHT,children:[new T({text:`아산시 스마트시티 | ${tts[type]} (${td})`,font:"맑은 고딕",size:16,color:"999999"})]})]})},
+      footers:{default:new F({children:[new P({alignment:A.CENTER,children:[new T({text:"아산시 · 제일엔지니어링 PMO | ",font:"맑은 고딕",size:16,color:"999999"}),new T({children:[PN.CURRENT],font:"맑은 고딕",size:16,color:"999999"}),new T({text:" / ",font:"맑은 고딕",size:16,color:"999999"}),new T({children:[PN.TOTAL_PAGES],font:"맑은 고딕",size:16,color:"999999"})]})]})},children:ch}]})}
+function log(t,m){const e=document.getElementById('sl');e.classList.add('show');const c={ok:'ok',warn:'warn',err:'err',ai:'ai',info:''}[t]||'';e.innerHTML+=`<div class="${c}">${new Date().toLocaleTimeString('ko-KR')} ${m}</div>`;e.scrollTop=e.scrollHeight}
+function addH(f,t){const h=JSON.parse(localStorage.getItem('rh')||'[]');h.unshift({f,t,d:new Date().toISOString()});if(h.length>20)h.length=20;localStorage.setItem('rh',JSON.stringify(h));loadH()}
+function loadH(){const h=JSON.parse(localStorage.getItem('rh')||'[]'),e=document.getElementById('hl');
+  if(!h.length){e.innerHTML='<div class="hist-item"><span class="hist-date">이력 없음</span></div>';return}
+  const tl={weekly:'주간',monthly:'월별',quarter:'분기',annual:'연간'};
+  e.innerHTML=h.map(x=>`<div class="hist-item"><span class="hist-name">${tl[x.t]||x.t} — ${x.f}</span><span class="hist-date">${new Date(x.d).toLocaleString('ko-KR').slice(0,16)}</span></div>`).join('')}
+</script>
+</body></html>
