@@ -1,0 +1,43 @@
+{
+  "generated": "2026-04-10T15:54:32.361Z",
+  "week": "W15 (04-06 ~ 04-10)",
+  "dday": 265,
+  "bms": {
+    "execRate": 41.21,
+    "totalExec": 98.90437246,
+    "totalBudget": 240
+  },
+  "wbs": {
+    "total": 175,
+    "done": 89,
+    "inProg": 61,
+    "delayed": 10,
+    "waiting": 15,
+    "actualRate": 52.3,
+    "achieveRate": 50.9,
+    "plannedRate": 95
+  },
+  "issues": [
+    {
+      "level": "긴급",
+      "text": "예산 집행률(41.21%)이 기간 소진율(76.6%) 대비 35%p 부족"
+    },
+    {
+      "level": "주의",
+      "text": "#4 디지털 OASIS SPOT (42.00억) 집행률 0.4%"
+    },
+    {
+      "level": "주의",
+      "text": "#8 DRT 수요응답형 교통 (10.00억) 집행률 0.0%"
+    },
+    {
+      "level": "주의",
+      "text": "WBS 지연 작업 9건 — 집중 관리 필요"
+    },
+    {
+      "level": "정보",
+      "text": "사업 종료까지 D-265 (9개월)"
+    }
+  ],
+  "filename": "주간진도보고서_2026-04-10_W15__04-06___04-10_.docx"
+}
