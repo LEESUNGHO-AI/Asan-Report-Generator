@@ -95,7 +95,7 @@ function callClaudeAPI(prompt) {
       });
     });
     req.on("error", e => { console.log("  ⚠️  Claude API 오류:", e.message); resolve(null); });
-    req.setTimeout(30000, () => { req.destroy(); resolve(null); });
+    req.setTimeout(60000, () => { req.destroy(); resolve(null); });
     req.write(body); req.end();
   });
 }
