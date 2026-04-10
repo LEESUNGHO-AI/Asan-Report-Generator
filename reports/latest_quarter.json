@@ -1,0 +1,21 @@
+{
+  "type": "quarter",
+  "generated": "2026-04-10T21:01:07.841Z",
+  "period": "2026년 2분기",
+  "bms": {
+    "execRate": 41.21,
+    "totalExec": 98.90437246
+  },
+  "wbs": {
+    "total": 175,
+    "done": 89,
+    "inProg": 61,
+    "delayed": 10,
+    "waiting": 15,
+    "actualRate": 52.3,
+    "achieveRate": 50.9,
+    "plannedRate": 95
+  },
+  "ai_engine": "fallback",
+  "filename": "2분기보고서_2026-04-10.docx"
+}
