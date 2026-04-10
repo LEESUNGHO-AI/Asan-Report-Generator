@@ -1,8 +1,8 @@
 {
-  "generated": "2026-04-10T16:03:34.895Z",
+  "generated": "2026-04-10T18:13:22.025Z",
   "week": "W15 (04-06 ~ 04-10)",
   "dday": 265,
-  "ai_engine": "fallback",
+  "ai_engine": "claude-sonnet-4",
   "bms": {
     "execRate": 41.21,
     "totalExec": 98.90437246,
