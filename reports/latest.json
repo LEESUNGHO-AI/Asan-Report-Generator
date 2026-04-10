@@ -1,8 +1,8 @@
 {
-  "generated": "2026-04-10T18:13:22.025Z",
+  "generated": "2026-04-10T20:50:18.527Z",
   "week": "W15 (04-06 ~ 04-10)",
   "dday": 265,
-  "ai_engine": "claude-sonnet-4",
+  "ai_engine": "fallback",
   "bms": {
     "execRate": 41.21,
     "totalExec": 98.90437246,
@@ -18,6 +18,6 @@
     "achieveRate": 50.9,
     "plannedRate": 95
   },
-  "issues": 5,
+  "issues": 3,
   "filename": "주간진도보고서_2026-04-10_W15.docx"
 }
