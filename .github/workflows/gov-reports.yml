@@ -1,0 +1,50 @@
+name: 상위기관 보고서 자동 생성
+
+on:
+  schedule:
+    - cron: "0 23 1 * *"    # 매월 1일 08:00 KST (월별 관리카드)
+    - cron: "0 23 1 1,4,7,10 *"  # 분기 시작월 1일 (분기보고서)
+  workflow_dispatch:
+    inputs:
+      report_type:
+        description: '보고서 유형'
+        required: true
+        default: 'monthly'
+        type: choice
+        options:
+          - monthly
+          - quarter
+          - annual
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: npm install docx
+      - name: 보고서 유형 결정
+        id: type
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "type=${{ inputs.report_type }}" >> $GITHUB_OUTPUT
+          else
+            MONTH=$(date -d '+9 hours' +%-m)
+            if [ $((MONTH % 3)) -eq 1 ]; then
+              echo "type=quarter" >> $GITHUB_OUTPUT
+            else
+              echo "type=monthly" >> $GITHUB_OUTPUT
+            fi
+          fi
+      - run: node scripts/generate_gov_report.js ${{ steps.type.outputs.type }}
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add reports/
+          git diff --cached --quiet || (git commit -m "📋 ${{ steps.type.outputs.type }} 보고서 $(date +'%Y-%m-%d' -d '+9 hours')" && git push)
