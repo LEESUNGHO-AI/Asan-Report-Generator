@@ -124,72 +124,292 @@ function pBMS(b){const s=b.summary,CL={"인건비(110)":"인건비","운영비(2
   return{totalBudget:(s["총사업비"]||0)/1e8,totalExec:(s["총집행액"]||0)/1e8,totalRemain:(s["총잔액"]||0)/1e8,execRate:s["전체집행률"]||0,cats,projects:prj,commonB:cB,commonE:cE}}
 function pWBS(ws,wd){const t=ws.total,sv=[];for(const r of wd.items||[])if(r.level==="1"&&r.weight>0)sv.push({name:r.name,weight:r.weight,planned:r.plannedRate,actual:r.actualRate,deviation:r.deviation});sv.sort((a,b)=>b.actual-a.actual);
   const dl=(wd.items||[]).filter(r=>r.status==="지연"&&r.level!=="1");return{overall:{total:t.total,done:t.done,inProg:t.inProg,delayed:t.delayed,waiting:t.waiting,actualRate:t.actualRate,achieveRate:t.achieveRate},svcs:sv,delayed:dl}}
-async function getAI(bd,wr){const k=localStorage.getItem('ak');if(!k){log('warn','⚠️ API Key 없음');return null}log('ai','🤖 Claude AI...');
+async function getAI(bd,wr){const k=localStorage.getItem('ak');if(!k){log('warn','⚠️ API Key 없음');return null}log('ai','🤖 Claude AI 분석 요청 중...');
   const n=new Date(),dd=Math.ceil((PE-n)/864e5),el=Math.ceil((n-PS)/864e5),tt=Math.ceil((PE-PS)/864e5),tp=(el/tt*100).toFixed(1);
-  const p=`아산시 스마트시티(240억,2023.12~2026.12) PMO 전문가. 집행률${bd.execRate}%(${bd.totalExec.toFixed(1)}억/240억),WBS${wr.overall.actualRate}%,기간${tp}%,D-${dd},지연${wr.delayed.length}건. 단위사업:${bd.projects.map(x=>`#${x.num}${x.name}(${x.rate}%)`).join(",")}. JSON만:{"executive_summary":"4문장","key_achievements":["3개"],"risk_analysis":[{"level":"긴급|주의","title":"","description":"","action":""}],"budget_insight":"3문장","wbs_insight":"3문장","next_week_plan":["3개"],"recommendations":["3개"]}`;
-  try{const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":k,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:3000,messages:[{role:"user",content:p}]})});
-    const d=await r.json();if(d.content?.[0]?.text){const j=JSON.parse(d.content[0].text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());log('ai','✅ AI 완료');return j}return null}catch(e){log('err','❌ AI: '+e.message);return null}}
-function fbAI(bd,wr){const n=new Date(),dd=Math.ceil((PE-n)/864e5),el=Math.ceil((n-PS)/864e5),tt=Math.ceil((PE-PS)/864e5),tp=(el/tt*100).toFixed(1),gap=(tp-bd.execRate).toFixed(0);
-  return{executive_summary:`집행률 ${bd.execRate}%, WBS ${wr.overall.actualRate}%. 기간소진율(${tp}%) 대비 ${gap}%p 부족. D-${dd}.`,key_achievements:["BMS/WBS 동기화 운영","통합 포털 현행화","보고서 시스템 가동"],
-    risk_analysis:[{level:"긴급",title:`집행 격차 ${gap}%p`,description:"기간 대비 부족",action:"발주 가속"},{level:"주의",title:`지연 ${wr.delayed.length}건`,description:"실적 미달",action:"만회 계획"}],
-    budget_insight:`240억 중 ${bd.totalExec.toFixed(1)}억(${bd.execRate}%). 잔여 ${bd.totalRemain.toFixed(1)}억, 월 ${(bd.totalRemain/(dd/30)).toFixed(1)}억 필요.`,
-    wbs_insight:`${wr.overall.total}건 중 완료 ${wr.overall.done}, 지연 ${wr.overall.delayed}건.`,next_week_plan:["발주 진행","지연 만회","집행 점검"],recommendations:["대형사업 발주 가속","비목 전용 검토","준공 로드맵 재설정"]}}
+  const M=n.getMonth()+1,Y=n.getFullYear();
+  const p=`당신은 아산시 강소형 스마트시티 조성사업(240억원) PMO로서 국토교통부 제출용 보고서를 작성합니다.
+${Y}년 ${M}월 기준 데이터:
+- 예산 집행률: ${bd.execRate}% (${bd.totalExec.toFixed(1)}억/240억), 잔액 ${bd.totalRemain.toFixed(1)}억
+- WBS: 공정률 ${wr.overall.actualRate}%, 달성률 ${wr.overall.achieveRate}%
+- 작업: 전체${wr.overall.total} 완료${wr.overall.done} 진행${wr.overall.inProg} 지연${wr.overall.delayed} 대기${wr.overall.waiting}
+- 기간소진율: ${tp}%, D-${dd}
+- 단위사업: ${bd.projects.map(x=>`#${x.num}${x.name}(예산${x.budget}억,집행${x.exec}억,${x.rate}%)`).join("; ")}
+반드시 아래 JSON만 응답하세요:
+{
+  "monthly_achievements":["금월 주요 추진실적 구체적 4~6개 (날짜+내용+결과 형태)"],
+  "project_status":[{"name":"세부사업명","status":"진행중|완료|미착수|지연","remark":"구체적 비고"}],
+  "issues":[{"issue":"이슈사항","impact":"영향","action":"대응방안","progress":"조치현황(진행중|완료|관리중)"}],
+  "difficulties":["애로사항/건의 2~3개"],
+  "next_plans":[{"category":"핵심|발주|계약|집행|품질","content":"추진내용","schedule":"일정","owner":"담당"}],
+  "executive_summary":"4문장 총괄 요약",
+  "budget_insight":"예산 관련 분석 2~3문장",
+  "wbs_insight":"공정 관련 분석 2~3문장",
+  "recommendations":["PMO 권고사항 3개"]
+}`;
+  try{const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":k,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4000,messages:[{role:"user",content:p}]})});
+    const d=await r.json();if(d.content?.[0]?.text){const j=JSON.parse(d.content[0].text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());log('ai','✅ AI 분석 완료');return j}return null}catch(e){log('err','❌ AI: '+e.message);return null}}
+
+function fbAI(bd,wr){const n=new Date(),dd=Math.ceil((PE-n)/864e5),el=Math.ceil((n-PS)/864e5),tt=Math.ceil((PE-PS)/864e5),tp=(el/tt*100).toFixed(1),gap=(tp-bd.execRate).toFixed(0),M=n.getMonth()+1;
+  return{
+    monthly_achievements:[`BMS/WBS 데이터 자동 동기화 시스템 정상 운영 중`,`통합 포털 v4.2 실시간 데이터 현행화 완료`,`GitHub Actions 기반 30분 자동 갱신 정상 가동`,`보고서 자동 생성 시스템 v3.0 구축 완료`],
+    project_status:bd.projects.map(p=>({name:p.name,status:parseFloat(p.rate)>=90?"완료":(parseFloat(p.rate)>0?"진행중":"미착수"),remark:`예산 ${p.budget}억, 집행 ${p.exec}억 (${p.rate}%)`})),
+    issues:[{issue:`예산 집행률 격차 (기간소진율 ${tp}% 대비 ${bd.execRate}%)`,impact:"집행 지연 리스크",action:"미착수 대형 사업 발주 가속화",progress:"관리중"},
+      {issue:`WBS 지연 작업 ${wr.delayed.length}건`,impact:"공정률 저하",action:"지연 원인 분석 및 만회 계획 수립",progress:"진행중"}],
+    difficulties:["미착수 대형 사업(OASIS SPOT, DRT 등) 발주 시 행정 절차 단축 필요","분기 실적보고 대비 집행 가속화 필요"],
+    next_plans:[{category:"핵심",content:"미착수 대형사업 발주 추진",schedule:`${M+1}월`,owner:"PMO"},
+      {category:"집행",content:"월간 집행 실적 점검 및 보고",schedule:`${M+1}월`,owner:"PMO/예산"},
+      {category:"품질",content:"WBS 지연 작업 만회 계획 수립",schedule:`${M+1}월`,owner:"PMO"}],
+    executive_summary:`${M}월 기준 예산 집행률 ${bd.execRate}%, WBS 공정률 ${wr.overall.actualRate}%. 기간 소진율(${tp}%) 대비 집행률 격차 ${gap}%p. 잔여 D-${dd}일로 집중 관리 필요.`,
+    budget_insight:`총 240억 중 ${bd.totalExec.toFixed(1)}억 집행(${bd.execRate}%). 잔여 ${bd.totalRemain.toFixed(1)}억을 약 ${Math.round(dd/30)}개월 내 집행 필요. 월평균 ${(bd.totalRemain/(dd/30)).toFixed(1)}억 집행 필요.`,
+    wbs_insight:`전체 ${wr.overall.total}건 중 완료 ${wr.overall.done}건(${(wr.overall.done/wr.overall.total*100).toFixed(0)}%), 지연 ${wr.overall.delayed}건. 서비스 구축 영역 집중 관리 필요.`,
+    recommendations:["미집행 대형 사업 발주 가속화","비목간 전용(여비→운영비 등) 검토","준공 일정 역산 기반 마일스톤 재설정"]}}
+
 async function gen(){if(S.busy||!S.bms)return;S.busy=true;const b=document.getElementById('gb');b.classList.add('loading');document.getElementById('sl').classList.add('show');
   try{log('info',`📋 ${S.type} 생성 시작...`);const bd=pBMS(S.bms),wr=pWBS(S.ws,S.wd);log('ok',`집행률 ${bd.execRate}%, WBS ${wr.overall.actualRate}%`);
     let ai=null;if(document.getElementById('useAI').checked)ai=await getAI(bd,wr);if(!ai){ai=fbAI(bd,wr);log('warn','Fallback 사용')}
     log('info','📄 DOCX 생성 중...');const doc=bDoc(S.type,bd,wr,ai);const blob=await docx.Packer.toBlob(doc);
     const tl={weekly:'주간진도보고서',monthly:'월별관리카드',quarter:'분기보고서',annual:'연간성과보고서'};const td=new Date().toISOString().slice(0,10);const fn=`${tl[S.type]}_${td}.docx`;
     saveAs(blob,fn);log('ok',`✅ ${fn} (${(blob.size/1024).toFixed(0)}KB)`);addH(fn,S.type)}catch(e){log('err','❌ '+e.message);console.error(e)}finally{S.busy=false;b.classList.remove('loading')}}
-function bDoc(type,bms,wbs,ai){const{Document:D,Paragraph:P,TextRun:T,Table:Tb,TableRow:TR,TableCell:TC,Header:H,Footer:F,AlignmentType:A,HeadingLevel:HL,BorderStyle:BS,WidthType:WT,ShadingType:ST,LevelFormat:LF,PageBreak:PB,PageNumber:PN}=docx;
-  const TW=9026,td=new Date().toISOString().slice(0,10);const n=new Date(),dd=Math.ceil((PE-n)/864e5),el=Math.ceil((n-PS)/864e5),tt=Math.ceil((PE-PS)/864e5),tp=(el/tt*100).toFixed(1);
-  const br={style:BS.SINGLE,size:1,color:"BBBBBB"},bo={top:br,bottom:br,left:br,right:br},cm={top:60,bottom:60,left:100,right:100},hs={fill:"1B3A5C",type:ST.CLEAR},alt={fill:"F0F5FA",type:ST.CLEAR};
+
+function bDoc(type,bms,wbs,ai){
+  const{Document:D,Paragraph:P,TextRun:T,Table:Tb,TableRow:TR,TableCell:TC,Header:H,Footer:F,
+    AlignmentType:A,HeadingLevel:HL,BorderStyle:BS,WidthType:WT,ShadingType:ST,LevelFormat:LF,PageBreak:PB,PageNumber:PN}=docx;
+  const TW=9026,td=new Date().toISOString().slice(0,10);
+  const n=new Date(),dd=Math.ceil((PE-n)/864e5),el=Math.ceil((n-PS)/864e5),tt=Math.ceil((PE-PS)/864e5),tp=(el/tt*100).toFixed(1);
+  const Y=n.getFullYear(),M=n.getMonth()+1,Q=Math.ceil(M/3);
+  const br={style:BS.SINGLE,size:1,color:"BBBBBB"},bo={top:br,bottom:br,left:br,right:br},cm={top:60,bottom:60,left:100,right:100};
+  const hs={fill:"1B3A5C",type:ST.CLEAR},alt={fill:"F0F5FA",type:ST.CLEAR},warn={fill:"FFF3CD",type:ST.CLEAR},info={fill:"E8F4FD",type:ST.CLEAR};
   const hC=(t,w)=>new TC({borders:bo,width:{size:w,type:WT.DXA},shading:hs,margins:cm,verticalAlign:"center",children:[new P({alignment:A.CENTER,children:[new T({text:t,bold:true,font:"맑은 고딕",size:18,color:"FFFFFF"})]})]});
   const dC=(t,w,o={})=>new TC({borders:bo,width:{size:w,type:WT.DXA},margins:cm,shading:o.shade?alt:undefined,verticalAlign:"center",children:[new P({alignment:o.align||A.LEFT,children:[new T({text:String(t),font:"맑은 고딕",size:18,bold:o.bold,color:o.color})]})]});
   const rc=v=>parseFloat(v)>=80?"00B050":(parseFloat(v)>=30?"ED7D31":"C00000");
-  const tts={weekly:"주간 진도 보고서",monthly:"월별 관리카드",quarter:"분기 보고서",annual:"연간 성과보고서"};const ch=[];
-  ch.push(new P({spacing:{before:1800}}));ch.push(new P({alignment:A.CENTER,children:[new T({text:"아산시 강소형 스마트시티 조성사업",font:"맑은 고딕",size:40,bold:true,color:"1B3A5C"})]}));
-  ch.push(new P({spacing:{before:200},alignment:A.CENTER,children:[new T({text:tts[type],font:"맑은 고딕",size:52,bold:true,color:"1B3A5C"})]}));
-  ch.push(new P({spacing:{before:400},alignment:A.CENTER,children:[new T({text:`작성일: ${td}`,font:"맑은 고딕",size:24,color:"888888"})]}));
-  if(type!=='weekly'){const ic=[3000,6026];ch.push(new P({spacing:{before:400}}));ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:ic,rows:[
-    new TR({children:[hC("사업명",ic[0]),dC("아산시 강소형 스마트시티 조성사업",ic[1],{bold:true})]}),new TR({children:[hC("사업기간",ic[0]),dC("2023.12 ~ 2026.12",ic[1])]}),
-    new TR({children:[hC("총사업비",ic[0]),dC("240억원 (국비120 · 도비28.8 · 시비91.2)",ic[1])]}),new TR({children:[hC("제출일",ic[0]),dC(td,ic[1])]})]}))}
-  ch.push(new P({spacing:{before:800},alignment:A.CENTER,children:[new T({text:"제일엔지니어링 PMO팀",font:"맑은 고딕",size:24,color:"444444"})]}));ch.push(new P({children:[new PB()]}));
-  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"Executive Summary",font:"맑은 고딕"})]}));
-  ch.push(new P({spacing:{after:120},children:[new T({text:ai.executive_summary,font:"맑은 고딕",size:20})]}));
-  const kC=[2256,2256,2258,2256];ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:kC,rows:[
-    new TR({children:[hC("예산 집행률",kC[0]),hC("WBS 공정률",kC[1]),hC("기간 소진율",kC[2]),hC("D-Day",kC[3])]}),
-    new TR({children:[dC(`${bms.execRate}%`,kC[0],{align:A.CENTER,bold:true,color:"2E75B6"}),dC(`${wbs.overall.actualRate}%`,kC[1],{align:A.CENTER,bold:true,color:"7030A0"}),dC(`${tp}%`,kC[2],{align:A.CENTER,bold:true,color:"ED7D31"}),dC(`D-${dd}`,kC[3],{align:A.CENTER,bold:true,color:"C00000"})]})]}));ch.push(new P({spacing:{after:200}}));
-  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"예산 집행 현황",font:"맑은 고딕"})]}));
-  if(ai.budget_insight)ch.push(new P({spacing:{after:120},shading:{fill:"E8F4FD",type:ST.CLEAR},children:[new T({text:"💡 "+ai.budget_insight,font:"맑은 고딕",size:18,color:"0C5460"})]}));
-  const cC=[2000,1800,1800,1800,1626];ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:cC,rows:[new TR({children:[hC("비목",cC[0]),hC("예산",cC[1]),hC("집행",cC[2]),hC("잔액",cC[3]),hC("집행률",cC[4])]}),
-    ...bms.cats.map((c,i)=>{const rm=(parseFloat(c.budget)-parseFloat(c.exec)).toFixed(1);return new TR({children:[dC(c.name,cC[0],{bold:true,shade:i%2===1}),dC(c.budget,cC[1],{align:A.RIGHT,shade:i%2===1}),dC(c.exec,cC[2],{align:A.RIGHT,shade:i%2===1}),dC(rm,cC[3],{align:A.RIGHT,shade:i%2===1}),dC(`${c.rate}%`,cC[4],{align:A.CENTER,bold:true,color:rc(c.rate),shade:i%2===1})]})})]}));ch.push(new P({spacing:{after:200}}));
-  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"단위사업별 현황",font:"맑은 고딕"})]}));
-  const pC=[500,2800,1300,1300,1300,1826];ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:pC,rows:[new TR({children:[hC("#",pC[0]),hC("사업명",pC[1]),hC("예산",pC[2]),hC("집행",pC[3]),hC("잔액",pC[4]),hC("집행률",pC[5])]}),
-    ...bms.projects.map((p,i)=>{const rm=(parseFloat(p.budget)-parseFloat(p.exec)).toFixed(1);return new TR({children:[dC(p.num,pC[0],{align:A.CENTER,shade:i%2===1}),dC(p.name,pC[1],{bold:true,shade:i%2===1}),dC(p.budget,pC[2],{align:A.RIGHT,shade:i%2===1}),dC(p.exec,pC[3],{align:A.RIGHT,shade:i%2===1}),dC(rm,pC[4],{align:A.RIGHT,shade:i%2===1}),dC(`${p.rate}%`,pC[5],{align:A.CENTER,bold:true,color:rc(p.rate),shade:i%2===1})]})})]}));ch.push(new P({children:[new PB()]}));
-  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"WBS 공정률",font:"맑은 고딕"})]}));
-  if(ai.wbs_insight)ch.push(new P({spacing:{after:120},shading:{fill:"E8F4FD",type:ST.CLEAR},children:[new T({text:"💡 "+ai.wbs_insight,font:"맑은 고딕",size:18,color:"0C5460"})]}));
-  const wC=[1504,1504,1506,1504,1504,1504];ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:wC,rows:[new TR({children:[hC("전체",wC[0]),hC("완료",wC[1]),hC("진행",wC[2]),hC("지연",wC[3]),hC("대기",wC[4]),hC("달성률",wC[5])]}),
-    new TR({children:[dC(`${wbs.overall.total}건`,wC[0],{align:A.CENTER,bold:true}),dC(`${wbs.overall.done}건`,wC[1],{align:A.CENTER,bold:true,color:"00B050"}),dC(`${wbs.overall.inProg}건`,wC[2],{align:A.CENTER,bold:true,color:"2E75B6"}),dC(`${wbs.overall.delayed}건`,wC[3],{align:A.CENTER,bold:true,color:"C00000"}),dC(`${wbs.overall.waiting}건`,wC[4],{align:A.CENTER,bold:true,color:"ED7D31"}),dC(`${wbs.overall.achieveRate}%`,wC[5],{align:A.CENTER,bold:true,color:"7030A0"})]})]}));
-  if(type!=='weekly'&&wbs.svcs.length){ch.push(new P({spacing:{before:200},heading:HL.HEADING_2,children:[new T({text:"Level-1 공정률",font:"맑은 고딕"})]}));const sC=[3200,1200,1500,1500,1626];
-    ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:sC,rows:[new TR({children:[hC("분류",sC[0]),hC("가중치",sC[1]),hC("계획",sC[2]),hC("실적",sC[3]),hC("편차",sC[4])]}),
-      ...wbs.svcs.map((s,i)=>{const dc=s.deviation>=0?"00B050":"C00000";return new TR({children:[dC(s.name,sC[0],{bold:true,shade:i%2===1}),dC(`${s.weight}%`,sC[1],{align:A.CENTER,shade:i%2===1}),dC(`${s.planned}%`,sC[2],{align:A.CENTER,shade:i%2===1}),dC(`${s.actual}%`,sC[3],{align:A.CENTER,bold:true,shade:i%2===1}),dC(`${s.deviation>0?"+":""}${s.deviation}%p`,sC[4],{align:A.CENTER,bold:true,color:dc,shade:i%2===1})]})})]}));}
-  ch.push(new P({spacing:{after:200}}));ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"리스크 분석",font:"맑은 고딕"})]}));
-  if(ai.risk_analysis?.length){const rC=[1000,2500,3200,2326];ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:rC,rows:[new TR({children:[hC("수준",rC[0]),hC("리스크",rC[1]),hC("상세",rC[2]),hC("대응",rC[3])]}),
-    ...ai.risk_analysis.map((r,i)=>{const lc=r.level==="긴급"?"C00000":"ED7D31";return new TR({children:[dC(r.level,rC[0],{align:A.CENTER,bold:true,color:lc,shade:i%2===1}),dC(r.title,rC[1],{bold:true,shade:i%2===1}),dC(r.description,rC[2],{shade:i%2===1}),dC(r.action,rC[3],{shade:i%2===1})]})})]}));}
-  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"향후 계획",font:"맑은 고딕"})]}));
-  for(const x of ai.next_week_plan||[])ch.push(new P({numbering:{reference:"bullets",level:0},children:[new T({text:x,font:"맑은 고딕",size:20})]}));
-  ch.push(new P({spacing:{before:200},heading:HL.HEADING_2,children:[new T({text:"PMO 권고사항",font:"맑은 고딕"})]}));
-  for(const x of ai.recommendations||[])ch.push(new P({numbering:{reference:"bullets",level:0},children:[new T({text:x,font:"맑은 고딕",size:20})]}));
-  if(document.getElementById('incDel').checked&&wbs.delayed.length){ch.push(new P({children:[new PB()]}));ch.push(new P({heading:HL.HEADING_1,children:[new T({text:`[부록] 지연 작업 (${wbs.delayed.length}건)`,font:"맑은 고딕"})]}));
-    const dL=[3500,2500,1500,1526];ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:dL,rows:[new TR({children:[hC("작업명",dL[0]),hC("대분류",dL[1]),hC("담당",dL[2]),hC("편차",dL[3])]}),
-      ...wbs.delayed.slice(0,15).map((d,i)=>new TR({children:[dC(d.name,dL[0],{shade:i%2===1}),dC(d.category||"-",dL[1],{shade:i%2===1}),dC(d.organization||"-",dL[2],{shade:i%2===1}),dC(`${d.deviation}%p`,dL[3],{align:A.CENTER,bold:true,color:"C00000",shade:i%2===1})]}))]}));}
-  return new D({numbering:{config:[{reference:"bullets",levels:[{level:0,format:LF.BULLET,text:"\u2022",alignment:A.LEFT,style:{paragraph:{indent:{left:720,hanging:360}}}}]}]},
+  const tts={weekly:"주간 진도 보고서",monthly:"월별 관리카드",quarter:`${Q}분기 보고서`,annual:"연간 성과보고서"};
+  const ch=[];
+
+  // ══════ 표지 ══════
+  ch.push(new P({spacing:{before:2400},alignment:A.CENTER,children:[new T({text:"스마트시티 조성사업 월간 추진현황 보고",font:"맑은 고딕",size:44,bold:true,color:"1B3A5C"})]}));
+  if(type==='weekly')
+    ch.push(new P({spacing:{before:200},alignment:A.CENTER,children:[new T({text:"(주간 진도 보고서)",font:"맑은 고딕",size:32,color:"444444"})]}));
+  else if(type==='quarter')
+    ch.push(new P({spacing:{before:200},alignment:A.CENTER,children:[new T({text:`(${Y}년 ${Q}분기)`,font:"맑은 고딕",size:32,color:"444444"})]}));
+  else if(type==='annual')
+    ch.push(new P({spacing:{before:200},alignment:A.CENTER,children:[new T({text:`(${Y}년 연간 성과보고서)`,font:"맑은 고딕",size:32,color:"444444"})]}));
+  else
+    ch.push(new P({spacing:{before:200},alignment:A.CENTER,children:[new T({text:`(${Y}년 ${M}월)`,font:"맑은 고딕",size:32,color:"444444"})]}));
+
+  ch.push(new P({spacing:{before:600}}));
+  const cvC=[3000,6026];
+  ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:cvC,rows:[
+    new TR({children:[hC("사 업 명",cvC[0]),dC("아산시 강소형 스마트시티 조성사업",cvC[1],{bold:true})]}),
+    new TR({children:[hC("사업위치",cvC[0]),dC("충청남도 아산시 도고면·배방읍 일원",cvC[1])]}),
+    new TR({children:[hC("사업기간",cvC[0]),dC("2023.08 ~ 2026.12 (구축 4년, 운영 3년)",cvC[1])]}),
+    new TR({children:[hC("총사업비",cvC[0]),dC("240억원 (국비 120억, 지방비 120억)",cvC[1])]}),
+    new TR({children:[hC("제 출 일",cvC[0]),dC(`${Y}년 ${M}월 ${n.getDate()}일`,cvC[1])]}),
+    new TR({children:[hC("제 출 처",cvC[0]),dC("아산시 스마트도시팀",cvC[1])]}),
+  ]}));
+  ch.push(new P({spacing:{before:800},alignment:A.CENTER,children:[new T({text:"아 산 시",font:"맑은 고딕",size:36,bold:true,color:"1B3A5C"})]}));
+  ch.push(new P({children:[new PB()]}));
+
+  // ══════ 1. 사업 개요 ══════
+  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"1. 사업 개요",font:"맑은 고딕"})]}));
+  ch.push(new P({heading:HL.HEADING_2,children:[new T({text:"1.1 사업 기본정보",font:"맑은 고딕"})]}));
+  const infoC=[2500,6526];
+  ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:infoC,rows:[
+    new TR({children:[hC("사업명",infoC[0]),dC("아산시 강소형 스마트시티 조성사업",infoC[1])]}),
+    new TR({children:[hC("사업유형",infoC[0]),dC("기존도시 - 지역소멸대응/인구변화대응",infoC[1])]}),
+    new TR({children:[hC("사업위치",infoC[0]),dC("충청남도 아산시 도고면·배방읍 일원",infoC[1])]}),
+    new TR({children:[hC("사업기간",infoC[0]),dC("2023년 8월 ~ 2026년 12월 (연장)",infoC[1])]}),
+    new TR({children:[hC("총사업비",infoC[0]),dC("240억원 (국비 120억, 도비 28.8억, 시비 91.2억)",infoC[1])]}),
+    new TR({children:[hC("주관기관",infoC[0]),dC("아산시 스마트도시팀",infoC[1])]}),
+    new TR({children:[hC("수행기관",infoC[0]),dC("(주)제일엔지니어링 컨소시엄",infoC[1])]}),
+  ]}));
+  ch.push(new P({spacing:{after:200}}));
+
+  // ══════ 2. 예산 집행 현황 ══════
+  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"2. 예산 집행 현황",font:"맑은 고딕"})]}));
+
+  // 2.1 총괄
+  ch.push(new P({heading:HL.HEADING_2,children:[new T({text:"2.1 총괄 집행현황 (누계)",font:"맑은 고딕"})]}));
+  const sumC=[3000,3013,3013];
+  ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:sumC,rows:[
+    new TR({children:[hC("구분",sumC[0]),hC("금액",sumC[1]),hC("비율",sumC[2])]}),
+    new TR({children:[dC("총 사업비",sumC[0],{bold:true}),dC("240.0억원",sumC[1],{align:A.RIGHT}),dC("100%",sumC[2],{align:A.CENTER})]}),
+    new TR({children:[dC("누계 집행액",sumC[0],{bold:true,shade:true}),dC(`${bms.totalExec.toFixed(1)}억원`,sumC[1],{align:A.RIGHT,shade:true,bold:true,color:"2E75B6"}),dC(`${bms.execRate}%`,sumC[2],{align:A.CENTER,shade:true,bold:true,color:rc(bms.execRate)})]}),
+    new TR({children:[dC("잔액",sumC[0],{bold:true}),dC(`${bms.totalRemain.toFixed(1)}억원`,sumC[1],{align:A.RIGHT}),dC(`${(100-bms.execRate).toFixed(1)}%`,sumC[2],{align:A.CENTER})]}),
+  ]}));
+
+  // AI 예산 인사이트
+  if(ai.budget_insight) ch.push(new P({spacing:{before:100,after:120},shading:info,children:[new T({text:"💡 "+ai.budget_insight,font:"맑은 고딕",size:18,color:"0C5460"})]}));
+
+  // 2.2 재원별
+  ch.push(new P({heading:HL.HEADING_2,children:[new T({text:"2.2 재원별 집행현황",font:"맑은 고딕"})]}));
+  const srcC=[1500,1500,1500,1500,1500,1526];
+  ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:srcC,rows:[
+    new TR({children:[hC("재원",srcC[0]),hC("총예산",srcC[1]),hC("전월누계",srcC[2]),hC("금월집행",srcC[3]),hC("누계",srcC[4]),hC("집행률",srcC[5])]}),
+    new TR({children:[dC("국비",srcC[0],{bold:true}),dC("120.0억",srcC[1],{align:A.RIGHT}),dC("-",srcC[2],{align:A.RIGHT}),dC("-",srcC[3],{align:A.RIGHT}),dC(`${(bms.totalExec*0.5).toFixed(1)}억`,srcC[4],{align:A.RIGHT}),dC(`${bms.execRate}%`,srcC[5],{align:A.CENTER,bold:true,color:rc(bms.execRate)})]}),
+    new TR({children:[dC("지방비(도+시)",srcC[0],{bold:true,shade:true}),dC("120.0억",srcC[1],{align:A.RIGHT,shade:true}),dC("-",srcC[2],{align:A.RIGHT,shade:true}),dC("-",srcC[3],{align:A.RIGHT,shade:true}),dC(`${(bms.totalExec*0.5).toFixed(1)}억`,srcC[4],{align:A.RIGHT,shade:true}),dC(`${bms.execRate}%`,srcC[5],{align:A.CENTER,bold:true,shade:true})]}),
+    new TR({children:[dC("합계",srcC[0],{bold:true}),dC("240.0억",srcC[1],{align:A.RIGHT,bold:true}),dC("-",srcC[2],{align:A.RIGHT}),dC("-",srcC[3],{align:A.RIGHT}),dC(`${bms.totalExec.toFixed(1)}억`,srcC[4],{align:A.RIGHT,bold:true}),dC(`${bms.execRate}%`,srcC[5],{align:A.CENTER,bold:true,color:rc(bms.execRate)})]}),
+  ]}));
+  ch.push(new P({spacing:{after:100}}));
+
+  // 2.3 비목별
+  ch.push(new P({heading:HL.HEADING_2,children:[new T({text:"2.3 비목별 집행현황",font:"맑은 고딕"})]}));
+  const cC=[2000,1800,1800,1800,1626];
+  ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:cC,rows:[
+    new TR({children:[hC("비목",cC[0]),hC("예산(억)",cC[1]),hC("집행(억)",cC[2]),hC("잔액(억)",cC[3]),hC("집행률",cC[4])]}),
+    ...bms.cats.map((c,i)=>{const rm=(parseFloat(c.budget)-parseFloat(c.exec)).toFixed(1);
+      return new TR({children:[dC(c.name,cC[0],{bold:true,shade:i%2===1}),dC(c.budget,cC[1],{align:A.RIGHT,shade:i%2===1}),
+        dC(c.exec,cC[2],{align:A.RIGHT,shade:i%2===1}),dC(rm,cC[3],{align:A.RIGHT,shade:i%2===1}),
+        dC(`${c.rate}%`,cC[4],{align:A.CENTER,bold:true,color:rc(c.rate),shade:i%2===1})]})})
+  ]}));
+  ch.push(new P({children:[new PB()]}));
+
+  // ══════ 3. 세부사업별 추진현황 ══════
+  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"3. 세부사업별 추진현황",font:"맑은 고딕"})]}));
+  const pSt=ai.project_status||[];
+  const pC=[500,3000,1200,1200,1200,1926];
+  ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:pC,rows:[
+    new TR({children:[hC("No",pC[0]),hC("세부사업/과업",pC[1]),hC("현황",pC[2]),hC("집행률",pC[3]),hC("예산(억)",pC[4]),hC("비고",pC[5])]}),
+    ...bms.projects.map((p,i)=>{
+      const st=pSt.find(x=>x.name&&(p.name.includes(x.name.slice(0,4))||x.name.includes(p.name.slice(0,4))));
+      const status=st?st.status:(parseFloat(p.rate)>=90?"완료":(parseFloat(p.rate)>0?"진행중":"미착수"));
+      const remark=st?st.remark:`집행 ${p.exec}억`;
+      const stColor=status==="완료"?"00B050":(status==="진행중"?"2E75B6":(status==="지연"?"C00000":"888888"));
+      return new TR({children:[dC(p.num,pC[0],{align:A.CENTER,shade:i%2===1}),dC(p.name,pC[1],{bold:true,shade:i%2===1}),
+        dC(status,pC[2],{align:A.CENTER,bold:true,color:stColor,shade:i%2===1}),
+        dC(`${p.rate}%`,pC[3],{align:A.CENTER,bold:true,color:rc(p.rate),shade:i%2===1}),
+        dC(p.budget,pC[4],{align:A.RIGHT,shade:i%2===1}),dC(remark,pC[5],{shade:i%2===1})]})})
+  ]}));
+  ch.push(new P({spacing:{after:200}}));
+
+  // ══════ 4. 금월 주요 추진실적 ══════
+  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:`4. ${type==='weekly'?'금주':'금월'} 주요 추진실적`,font:"맑은 고딕"})]}));
+  ch.push(new P({heading:HL.HEADING_2,children:[new T({text:"4.1 주요 성과/진척",font:"맑은 고딕"})]}));
+  for(const a of (ai.monthly_achievements||[]))
+    ch.push(new P({numbering:{reference:"bullets",level:0},spacing:{before:40},children:[new T({text:a,font:"맑은 고딕",size:20})]}));
+  ch.push(new P({spacing:{after:200}}));
+
+  // ══════ 5. 주요 이슈 및 대응현황 ══════
+  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"5. 주요 이슈 및 대응현황",font:"맑은 고딕"})]}));
+  const issues=ai.issues||[];
+  if(issues.length){
+    const iC=[500,2500,1800,2200,2026];
+    ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:iC,rows:[
+      new TR({children:[hC("No",iC[0]),hC("이슈사항",iC[1]),hC("영향",iC[2]),hC("대응방안",iC[3]),hC("조치현황",iC[4])]}),
+      ...issues.map((x,i)=>new TR({children:[dC(i+1,iC[0],{align:A.CENTER,shade:i%2===1}),dC(x.issue,iC[1],{bold:true,shade:i%2===1}),
+        dC(x.impact,iC[2],{shade:i%2===1}),dC(x.action,iC[3],{shade:i%2===1}),dC(x.progress,iC[4],{align:A.CENTER,shade:i%2===1})]}))
+    ]}));
+  }
+  // 애로사항
+  if(ai.difficulties?.length){
+    ch.push(new P({spacing:{before:200},heading:HL.HEADING_2,children:[new T({text:"5.1 애로사항 및 건의",font:"맑은 고딕"})]}));
+    for(const d of ai.difficulties)
+      ch.push(new P({numbering:{reference:"bullets",level:0},children:[new T({text:d,font:"맑은 고딕",size:20})]}));
+  }
+  ch.push(new P({children:[new PB()]}));
+
+  // ══════ 6. 향후 계획 ══════
+  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"6. 향후 추진계획",font:"맑은 고딕"})]}));
+  const plans=ai.next_plans||[];
+  if(plans.length){
+    const plC=[1200,3826,2000,2000];
+    ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:plC,rows:[
+      new TR({children:[hC("구분",plC[0]),hC("추진내용",plC[1]),hC("일정",plC[2]),hC("담당",plC[3])]}),
+      ...plans.map((x,i)=>new TR({children:[dC(x.category||"-",plC[0],{align:A.CENTER,bold:true,shade:i%2===1}),dC(x.content,plC[1],{shade:i%2===1}),
+        dC(x.schedule||"-",plC[2],{align:A.CENTER,shade:i%2===1}),dC(x.owner||"PMO",plC[3],{align:A.CENTER,shade:i%2===1})]}))
+    ]}));
+  }
+
+  // PMO 권고
+  if(ai.recommendations?.length){
+    ch.push(new P({spacing:{before:200},heading:HL.HEADING_2,children:[new T({text:"6.1 PMO 권고사항",font:"맑은 고딕"})]}));
+    for(const r of ai.recommendations) ch.push(new P({numbering:{reference:"bullets",level:0},children:[new T({text:r,font:"맑은 고딕",size:20})]}));
+  }
+  ch.push(new P({spacing:{after:200}}));
+
+  // ══════ 분기/연간 추가 섹션 ══════
+  if(type==='quarter'||type==='annual'){
+    ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"7. WBS 공정률 현황",font:"맑은 고딕"})]}));
+    if(ai.wbs_insight) ch.push(new P({spacing:{after:120},shading:info,children:[new T({text:"💡 "+ai.wbs_insight,font:"맑은 고딕",size:18,color:"0C5460"})]}));
+    const wC=[1504,1504,1506,1504,1504,1504];
+    ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:wC,rows:[
+      new TR({children:[hC("전체",wC[0]),hC("완료",wC[1]),hC("진행",wC[2]),hC("지연",wC[3]),hC("대기",wC[4]),hC("달성률",wC[5])]}),
+      new TR({children:[dC(`${wbs.overall.total}건`,wC[0],{align:A.CENTER,bold:true}),dC(`${wbs.overall.done}건`,wC[1],{align:A.CENTER,bold:true,color:"00B050"}),
+        dC(`${wbs.overall.inProg}건`,wC[2],{align:A.CENTER,bold:true,color:"2E75B6"}),dC(`${wbs.overall.delayed}건`,wC[3],{align:A.CENTER,bold:true,color:"C00000"}),
+        dC(`${wbs.overall.waiting}건`,wC[4],{align:A.CENTER,bold:true,color:"ED7D31"}),dC(`${wbs.overall.achieveRate}%`,wC[5],{align:A.CENTER,bold:true,color:"7030A0"})]})]}));
+    // Level-1
+    if(wbs.svcs.length){
+      ch.push(new P({spacing:{before:200},heading:HL.HEADING_2,children:[new T({text:"7.1 Level-1 공정률 (가중평균)",font:"맑은 고딕"})]}));
+      const sC=[3200,1200,1500,1500,1626];
+      ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:sC,rows:[
+        new TR({children:[hC("분류",sC[0]),hC("가중치",sC[1]),hC("계획",sC[2]),hC("실적",sC[3]),hC("편차",sC[4])]}),
+        ...wbs.svcs.map((s,i)=>{const dc=s.deviation>=0?"00B050":"C00000";
+          return new TR({children:[dC(s.name,sC[0],{bold:true,shade:i%2===1}),dC(`${s.weight}%`,sC[1],{align:A.CENTER,shade:i%2===1}),
+            dC(`${s.planned}%`,sC[2],{align:A.CENTER,shade:i%2===1}),dC(`${s.actual}%`,sC[3],{align:A.CENTER,bold:true,shade:i%2===1}),
+            dC(`${s.deviation>0?"+":""}${s.deviation}%p`,sC[4],{align:A.CENTER,bold:true,color:dc,shade:i%2===1})]})})]}));
+    }
+    // 성과지표
+    ch.push(new P({spacing:{before:200},heading:HL.HEADING_1,children:[new T({text:"8. 성과지표 달성 현황",font:"맑은 고딕"})]}));
+    const kpiC=[3000,2000,2000,2026];
+    ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:kpiC,rows:[
+      new TR({children:[hC("성과지표",kpiC[0]),hC("목표",kpiC[1]),hC("실적",kpiC[2]),hC("달성률",kpiC[3])]}),
+      new TR({children:[dC("예산 집행률",kpiC[0],{bold:true}),dC("100%",kpiC[1],{align:A.CENTER}),dC(`${bms.execRate}%`,kpiC[2],{align:A.CENTER}),dC(`${bms.execRate}%`,kpiC[3],{align:A.CENTER,bold:true,color:rc(bms.execRate)})]}),
+      new TR({children:[dC("WBS 공정률",kpiC[0],{bold:true,shade:true}),dC("100%",kpiC[1],{align:A.CENTER,shade:true}),dC(`${wbs.overall.actualRate}%`,kpiC[2],{align:A.CENTER,shade:true}),dC(`${wbs.overall.achieveRate}%`,kpiC[3],{align:A.CENTER,bold:true,shade:true})]}),
+      new TR({children:[dC("서비스 구축",kpiC[0],{bold:true}),dC(`${wbs.overall.total}건`,kpiC[1],{align:A.CENTER}),dC(`${wbs.overall.done}건`,kpiC[2],{align:A.CENTER}),dC(`${(wbs.overall.done/wbs.overall.total*100).toFixed(0)}%`,kpiC[3],{align:A.CENTER,bold:true})]}),
+    ]}));
+  }
+
+  if(type==='annual'){
+    ch.push(new P({children:[new PB()]}));
+    ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"9. 사업 추진체계",font:"맑은 고딕"})]}));
+    const orgC=[2000,3000,4026];
+    ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:orgC,rows:[
+      new TR({children:[hC("구분",orgC[0]),hC("기관",orgC[1]),hC("역할",orgC[2])]}),
+      new TR({children:[dC("시행기관",orgC[0],{bold:true}),dC("아산시",orgC[1]),dC("스마트도시팀, 사업총괄",orgC[2])]}),
+      new TR({children:[dC("직접보조사업자",orgC[0],{bold:true,shade:true}),dC("제일엔지니어링",orgC[1],{shade:true}),dC("PMO, 사업관리·기술지원",orgC[2],{shade:true})]}),
+      new TR({children:[dC("간접보조사업자",orgC[0],{bold:true}),dC("호서대학교",orgC[1]),dC("이노베이션센터 운영",orgC[2])]}),
+      new TR({children:[dC("간접보조사업자",orgC[0],{bold:true,shade:true}),dC("충남연구원",orgC[1],{shade:true}),dC("연구·정책지원",orgC[2],{shade:true})]}),
+      new TR({children:[dC("간접보조사업자",orgC[0],{bold:true}),dC("KAIST",orgC[1]),dC("기술자문·연구지원",orgC[2])]}),
+    ]}));
+  }
+
+  // ══════ 지연작업 부록 ══════
+  if(document.getElementById('incDel').checked&&wbs.delayed.length){
+    ch.push(new P({children:[new PB()]}));
+    ch.push(new P({heading:HL.HEADING_1,children:[new T({text:`[부록] WBS 지연 작업 (${wbs.delayed.length}건)`,font:"맑은 고딕"})]}));
+    const dL=[3500,2500,1500,1526];
+    ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:dL,rows:[
+      new TR({children:[hC("작업명",dL[0]),hC("대분류",dL[1]),hC("담당",dL[2]),hC("편차",dL[3])]}),
+      ...wbs.delayed.slice(0,15).map((d,i)=>new TR({children:[dC(d.name,dL[0],{shade:i%2===1}),dC(d.category||"-",dL[1],{shade:i%2===1}),
+        dC(d.organization||"-",dL[2],{shade:i%2===1}),dC(`${d.deviation}%p`,dL[3],{align:A.CENTER,bold:true,color:"C00000",shade:i%2===1})]}))
+    ]}));
+  }
+
+  // ══════ 7. 첨부/체크리스트 ══════
+  ch.push(new P({spacing:{before:300},heading:HL.HEADING_1,children:[new T({text:type==='quarter'||type==='annual'?"10. 첨부자료":"7. 첨부자료",font:"맑은 고딕"})]}));
+  ch.push(new P({numbering:{reference:"nums",level:0},children:[new T({text:"세부사업별 추진현황 상세 (별첨 1)",font:"맑은 고딕",size:20})]}));
+  ch.push(new P({numbering:{reference:"nums",level:0},children:[new T({text:"예산집행 상세내역 (별첨 2)",font:"맑은 고딕",size:20})]}));
+  ch.push(new P({numbering:{reference:"nums",level:0},children:[new T({text:"현장사진 (별첨 3)",font:"맑은 고딕",size:20})]}));
+  ch.push(new P({spacing:{before:200,after:100},shading:{fill:"E6F4EA",type:ST.CLEAR},children:[
+    new T({text:"✅ 제출 체크리스트: □ 데이터 정합성 검증  □ PM 검토  □ 팀장 승인  □ 첨부자료 확인  □ e-나라도움 등록",font:"맑은 고딕",size:16,color:"1E7E34"})]}));
+  ch.push(new P({spacing:{before:100},alignment:A.RIGHT,children:[
+    new T({text:`작성: PMO팀  |  검토: 이성호 PM  |  승인: 박상국 팀장  |  제출기한: 익월 5일`,font:"맑은 고딕",size:16,color:"888888"})]}));
+
+  return new D({numbering:{config:[
+    {reference:"bullets",levels:[{level:0,format:LF.BULLET,text:"\u2022",alignment:A.LEFT,style:{paragraph:{indent:{left:720,hanging:360}}}}]},
+    {reference:"nums",levels:[{level:0,format:LF.DECIMAL,text:"%1.",alignment:A.LEFT,style:{paragraph:{indent:{left:720,hanging:360}}}}]},
+  ]},
     styles:{default:{document:{run:{font:"맑은 고딕",size:20}}},paragraphStyles:[
       {id:"Heading1",name:"Heading 1",basedOn:"Normal",next:"Normal",quickFormat:true,run:{size:28,bold:true,font:"맑은 고딕",color:"1B3A5C"},paragraph:{spacing:{before:360,after:120},outlineLevel:0}},
       {id:"Heading2",name:"Heading 2",basedOn:"Normal",next:"Normal",quickFormat:true,run:{size:24,bold:true,font:"맑은 고딕",color:"2E75B6"},paragraph:{spacing:{before:240,after:100},outlineLevel:1}}]},
     sections:[{properties:{page:{size:{width:11906,height:16838},margin:{top:1440,bottom:1440,left:1440,right:1440}}},
       headers:{default:new H({children:[new P({alignment:A.RIGHT,children:[new T({text:`아산시 스마트시티 | ${tts[type]} (${td})`,font:"맑은 고딕",size:16,color:"999999"})]})]})},
-      footers:{default:new F({children:[new P({alignment:A.CENTER,children:[new T({text:"아산시 · 제일엔지니어링 PMO | ",font:"맑은 고딕",size:16,color:"999999"}),new T({children:[PN.CURRENT],font:"맑은 고딕",size:16,color:"999999"}),new T({text:" / ",font:"맑은 고딕",size:16,color:"999999"}),new T({children:[PN.TOTAL_PAGES],font:"맑은 고딕",size:16,color:"999999"})]})]})},children:ch}]})}
+      footers:{default:new F({children:[new P({alignment:A.CENTER,children:[
+        new T({text:"아산시 스마트도시팀 · 제일엔지니어링 PMO | ",font:"맑은 고딕",size:16,color:"999999"}),
+        new T({children:[PN.CURRENT],font:"맑은 고딕",size:16,color:"999999"}),
+        new T({text:" / ",font:"맑은 고딕",size:16,color:"999999"}),
+        new T({children:[PN.TOTAL_PAGES],font:"맑은 고딕",size:16,color:"999999"})]})]})},children:ch}]});
+}
+
 function log(t,m){const e=document.getElementById('sl');e.classList.add('show');const c={ok:'ok',warn:'warn',err:'err',ai:'ai',info:''}[t]||'';e.innerHTML+=`<div class="${c}">${new Date().toLocaleTimeString('ko-KR')} ${m}</div>`;e.scrollTop=e.scrollHeight}
 function addH(f,t){const h=JSON.parse(localStorage.getItem('rh')||'[]');h.unshift({f,t,d:new Date().toISOString()});if(h.length>20)h.length=20;localStorage.setItem('rh',JSON.stringify(h));loadH()}
 function loadH(){const h=JSON.parse(localStorage.getItem('rh')||'[]'),e=document.getElementById('hl');
