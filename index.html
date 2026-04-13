@@ -3,7 +3,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>아산시 스마트시티 | 보고서 생성 시스템</title>
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.min.js"></script>
+<script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <style>
 :root{--bg:#08090f;--card:#111820;--card2:#161f2b;--bdr:#1e2a3a;--t1:#e6edf3;--t2:#7d8ca3;--accent:#00d4aa;--accent2:#7B61FF;--blue:#3b82f6;--red:#ef4444;--amber:#f59e0b;--green:#22c55e;--glow:rgba(0,212,170,.08)}
@@ -115,6 +115,7 @@ const NM={1:"유무선 네트워크 구축",2:"모바일 전자시민증(ECC)",3
 window.addEventListener('load',async()=>{document.getElementById('ak').value=localStorage.getItem('ak')||'';loadH();await loadD()});
 function sel(e){document.querySelectorAll('.rcard').forEach(c=>c.classList.remove('selected'));e.classList.add('selected');S.type=e.dataset.type}
 async function genDirect(el){
+  if(typeof docx==='undefined'){log('err','❌ docx 라이브러리 로딩 중... 잠시 후 다시 클릭해주세요');return;}
   const type=el.dataset.type;if(S.busy||!S.bms)return;
   sel(el);S.busy=true;
   const overlay=document.getElementById('cl-'+type);
@@ -148,45 +149,49 @@ function pBMS(b){const s=b.summary,CL={"인건비(110)":"인건비","운영비(2
   return{totalBudget:(s["총사업비"]||0)/1e8,totalExec:(s["총집행액"]||0)/1e8,totalRemain:(s["총잔액"]||0)/1e8,execRate:s["전체집행률"]||0,cats,projects:prj,commonB:cB,commonE:cE}}
 function pWBS(ws,wd){const t=ws.total,sv=[];for(const r of wd.items||[])if(r.level==="1"&&r.weight>0)sv.push({name:r.name,weight:r.weight,planned:r.plannedRate,actual:r.actualRate,deviation:r.deviation});sv.sort((a,b)=>b.actual-a.actual);
   const dl=(wd.items||[]).filter(r=>r.status==="지연"&&r.level!=="1");return{overall:{total:t.total,done:t.done,inProg:t.inProg,delayed:t.delayed,waiting:t.waiting,actualRate:t.actualRate,achieveRate:t.achieveRate},svcs:sv,delayed:dl}}
-async function getAI(bd,wr){const k=localStorage.getItem('ak');if(!k){log('warn','⚠️ API Key 없음');return null}log('ai','🤖 Claude AI 분석 요청 중...');
-  const n=new Date(),dd=Math.ceil((PE-n)/864e5),el=Math.ceil((n-PS)/864e5),tt=Math.ceil((PE-PS)/864e5),tp=(el/tt*100).toFixed(1);
-  const M=n.getMonth()+1,Y=n.getFullYear();
-  const p=`당신은 아산시 강소형 스마트시티 조성사업(240억원) PMO로서 국토교통부 제출용 보고서를 작성합니다.
-${Y}년 ${M}월 기준 데이터:
-- 예산 집행률: ${bd.execRate}% (${bd.totalExec.toFixed(1)}억/240억), 잔액 ${bd.totalRemain.toFixed(1)}억
-- WBS: 공정률 ${wr.overall.actualRate}%, 달성률 ${wr.overall.achieveRate}%
-- 작업: 전체${wr.overall.total} 완료${wr.overall.done} 진행${wr.overall.inProg} 지연${wr.overall.delayed} 대기${wr.overall.waiting}
-- 기간소진율: ${tp}%, D-${dd}
-- 단위사업: ${bd.projects.map(x=>`#${x.num}${x.name}(예산${x.budget}억,집행${x.exec}억,${x.rate}%)`).join("; ")}
-반드시 아래 JSON만 응답하세요:
-{
-  "monthly_achievements":["금월 주요 추진실적 구체적 4~6개 (날짜+내용+결과 형태)"],
-  "project_status":[{"name":"세부사업명","status":"진행중|완료|미착수|지연","remark":"구체적 비고"}],
-  "issues":[{"issue":"이슈사항","impact":"영향","action":"대응방안","progress":"조치현황(진행중|완료|관리중)"}],
-  "difficulties":["애로사항/건의 2~3개"],
-  "next_plans":[{"category":"핵심|발주|계약|집행|품질","content":"추진내용","schedule":"일정","owner":"담당"}],
-  "executive_summary":"4문장 총괄 요약",
-  "budget_insight":"예산 관련 분석 2~3문장",
-  "wbs_insight":"공정 관련 분석 2~3문장",
-  "recommendations":["PMO 권고사항 3개"]
-}`;
-  try{const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":k,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4000,messages:[{role:"user",content:p}]})});
-    const d=await r.json();if(d.content?.[0]?.text){const j=JSON.parse(d.content[0].text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());log('ai','✅ AI 분석 완료');return j}return null}catch(e){log('err','❌ AI: '+e.message);return null}}
+async function getAI(bd,wr){
+  log('info','💡 브라우저 환경 → 데이터 기반 자동 분석 사용');
+  return null;
+}
 
-function fbAI(bd,wr){const n=new Date(),dd=Math.ceil((PE-n)/864e5),el=Math.ceil((n-PS)/864e5),tt=Math.ceil((PE-PS)/864e5),tp=(el/tt*100).toFixed(1),gap=(tp-bd.execRate).toFixed(0),M=n.getMonth()+1;
+function fbAI(bd,wr){
+  const n=new Date(),dd=Math.ceil((PE-n)/864e5),el=Math.ceil((n-PS)/864e5),tt=Math.ceil((PE-PS)/864e5),tp=(el/tt*100).toFixed(1),gap=(tp-bd.execRate).toFixed(0),M=n.getMonth()+1,Y=n.getFullYear();
+  const monthRemain=Math.round(dd/30);
+  const monthlyNeed=(bd.totalRemain/monthRemain).toFixed(1);
+  const topProj=bd.projects.filter(p=>parseFloat(p.rate)>50).map(p=>`${p.name}(${p.rate}%)`).join(', ')||'없음';
+  const zeroProj=bd.projects.filter(p=>parseFloat(p.rate)===0&&parseFloat(p.budget)>5);
+  const activeProj=bd.projects.filter(p=>parseFloat(p.rate)>0);
   return{
-    monthly_achievements:[`BMS/WBS 데이터 자동 동기화 시스템 정상 운영 중`,`통합 포털 v4.2 실시간 데이터 현행화 완료`,`GitHub Actions 기반 30분 자동 갱신 정상 가동`,`보고서 자동 생성 시스템 v3.0 구축 완료`],
-    project_status:bd.projects.map(p=>({name:p.name,status:parseFloat(p.rate)>=90?"완료":(parseFloat(p.rate)>0?"진행중":"미착수"),remark:`예산 ${p.budget}억, 집행 ${p.exec}억 (${p.rate}%)`})),
-    issues:[{issue:`예산 집행률 격차 (기간소진율 ${tp}% 대비 ${bd.execRate}%)`,impact:"집행 지연 리스크",action:"미착수 대형 사업 발주 가속화",progress:"관리중"},
-      {issue:`WBS 지연 작업 ${wr.delayed.length}건`,impact:"공정률 저하",action:"지연 원인 분석 및 만회 계획 수립",progress:"진행중"}],
-    difficulties:["미착수 대형 사업(OASIS SPOT, DRT 등) 발주 시 행정 절차 단축 필요","분기 실적보고 대비 집행 가속화 필요"],
-    next_plans:[{category:"핵심",content:"미착수 대형사업 발주 추진",schedule:`${M+1}월`,owner:"PMO"},
-      {category:"집행",content:"월간 집행 실적 점검 및 보고",schedule:`${M+1}월`,owner:"PMO/예산"},
-      {category:"품질",content:"WBS 지연 작업 만회 계획 수립",schedule:`${M+1}월`,owner:"PMO"}],
-    executive_summary:`${M}월 기준 예산 집행률 ${bd.execRate}%, WBS 공정률 ${wr.overall.actualRate}%. 기간 소진율(${tp}%) 대비 집행률 격차 ${gap}%p. 잔여 D-${dd}일로 집중 관리 필요.`,
-    budget_insight:`총 240억 중 ${bd.totalExec.toFixed(1)}억 집행(${bd.execRate}%). 잔여 ${bd.totalRemain.toFixed(1)}억을 약 ${Math.round(dd/30)}개월 내 집행 필요. 월평균 ${(bd.totalRemain/(dd/30)).toFixed(1)}억 집행 필요.`,
-    wbs_insight:`전체 ${wr.overall.total}건 중 완료 ${wr.overall.done}건(${(wr.overall.done/wr.overall.total*100).toFixed(0)}%), 지연 ${wr.overall.delayed}건. 서비스 구축 영역 집중 관리 필요.`,
-    recommendations:["미집행 대형 사업 발주 가속화","비목간 전용(여비→운영비 등) 검토","준공 일정 역산 기반 마일스톤 재설정"]}}
+    monthly_achievements:[
+      `BMS 예산 집행 현황 실시간 모니터링 시스템 정상 운영 (${bd.cats.length}개 비목, ${bd.projects.length}개 단위사업)`,
+      `WBS 공정관리 시스템 운영: 전체 ${wr.overall.total}건 중 완료 ${wr.overall.done}건, 진행중 ${wr.overall.inProg}건 관리`,
+      `통합 포털 대시보드 실시간 현행화 (GitHub Actions 30분 자동 갱신)`,
+      `보고서 자동 생성 시스템 v3.0 가동 (주간/월간/분기/연간 4종)`
+    ],
+    project_status:bd.projects.map(p=>{
+      const r=parseFloat(p.rate);
+      let status=r>=90?"완료":(r>0?"진행중":"미착수");
+      let remark=r>=90?`집행 완료 (${p.exec}억/${p.budget}억)`:(r>0?`집행 ${p.exec}억 (잔액 ${(parseFloat(p.budget)-parseFloat(p.exec)).toFixed(1)}억)`:(parseFloat(p.budget)>=10?'발주 준비중':'업체선정 준비'));
+      return{name:p.name,status,remark};
+    }),
+    issues:[
+      {issue:`예산 집행률 격차 (기간소진율 ${tp}% vs 집행률 ${bd.execRate}%)`,impact:`${gap}%p 부족, 국비 환수 리스크`,action:"미착수 대형 사업 조속 발주",progress:"관리중"},
+      ...zeroProj.slice(0,2).map(p=>({issue:`${p.name} 미착수 (예산 ${p.budget}억)`,impact:"공정 지연 및 집행률 저하",action:"발주 일정 수립 및 행정절차 가속",progress:"진행중"})),
+      ...(wr.overall.delayed>3?[{issue:`WBS 지연 작업 ${wr.overall.delayed}건`,impact:"전체 공정률 저하",action:"지연 원인 분석 및 만회 계획",progress:"진행중"}]:[])
+    ],
+    difficulties:["미착수 대형 사업 발주 시 행정 절차 단축 필요","사업기간 내 준공을 위한 집중 관리 체계 강화 필요"],
+    next_plans:[
+      {category:"핵심",content:"미착수 대형사업 발주 추진 (OASIS SPOT, DRT 등)",schedule:`${M===12?1:M+1}월`,owner:"PMO"},
+      {category:"집행",content:`월 ${monthlyNeed}억 집행 목표 달성`,schedule:`${M===12?1:M+1}월`,owner:"PMO/예산"},
+      {category:"품질",content:"WBS 지연 작업 만회 계획 수립 및 이행",schedule:`${M===12?1:M+1}월`,owner:"PMO"},
+      {category:"관리",content:"상위기관 보고서 제출 (국토부/충남도)",schedule:`${M===12?1:M+1}월 5일/10일`,owner:"PMO"}
+    ],
+    executive_summary:`${Y}년 ${M}월 기준 예산 집행률 ${bd.execRate}%(${bd.totalExec.toFixed(1)}억/240억), WBS 공정률 ${wr.overall.actualRate}%(달성률 ${wr.overall.achieveRate}%). 기간 소진율(${tp}%) 대비 집행률 격차 ${gap}%p로 집행 가속화 필요. 잔여 D-${dd}일(약 ${monthRemain}개월), 월평균 ${monthlyNeed}억 집행 필요.`,
+    budget_insight:`총 240억 중 ${bd.totalExec.toFixed(1)}억 집행(${bd.execRate}%). 잔여 ${bd.totalRemain.toFixed(1)}억을 약 ${monthRemain}개월 내 집행해야 하며, 월평균 ${monthlyNeed}억 집행 필요. 집행 완료 또는 고집행 사업: ${topProj}.`,
+    wbs_insight:`전체 ${wr.overall.total}건 중 완료 ${wr.overall.done}건(${(wr.overall.done/wr.overall.total*100).toFixed(0)}%), 진행 ${wr.overall.inProg}건, 지연 ${wr.overall.delayed}건. 진행중 ${activeProj.length}개 단위사업 집중 관리 필요.`,
+    recommendations:["미집행 대형 사업(OASIS SPOT 42억, DRT 10억 등) 발주 가속화","비목간 전용(여비→운영비 등) 검토로 집행 효율화","준공 일정(2026.12.31) 역산 기반 마일스톤 재설정 필요"]
+  };
+}
 
 async function gen(){if(S.busy||!S.bms)return;S.busy=true;document.getElementById('sl').classList.add('show');
   try{log('info',`📋 ${S.type} 생성 시작...`);const bd=pBMS(S.bms),wr=pWBS(S.ws,S.wd);log('ok',`집행률 ${bd.execRate}%, WBS ${wr.overall.actualRate}%`);
