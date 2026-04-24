@@ -1,7 +1,7 @@
 {
-  "generated": "2026-04-17T18:20:58.793Z",
-  "week": "W16 (04-13 ~ 04-17)",
-  "dday": 258,
+  "generated": "2026-04-24T18:46:45.445Z",
+  "week": "W17 (04-20 ~ 04-24)",
+  "dday": 251,
   "ai_engine": "claude-sonnet-4",
   "bms": {
     "execRate": 41.21,
@@ -18,6 +18,6 @@
     "achieveRate": 50.9,
     "plannedRate": 95
   },
-  "issues": 4,
-  "filename": "주간진도보고서_2026-04-17_W16.docx"
+  "issues": 3,
+  "filename": "주간진도보고서_2026-04-24_W17.docx"
 }
