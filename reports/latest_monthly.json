@@ -1,21 +1,21 @@
 {
   "type": "monthly",
-  "generated": "2026-04-10T21:01:07.342Z",
-  "period": "2026년 4월",
+  "generated": "2026-05-02T08:42:49.154Z",
+  "period": "2026년 5월",
   "bms": {
     "execRate": 41.21,
     "totalExec": 98.90437246
   },
   "wbs": {
     "total": 175,
-    "done": 89,
-    "inProg": 61,
-    "delayed": 10,
+    "done": 94,
+    "inProg": 57,
+    "delayed": 9,
     "waiting": 15,
-    "actualRate": 52.3,
-    "achieveRate": 50.9,
+    "actualRate": 57.6,
+    "achieveRate": 53.7,
     "plannedRate": 95
   },
-  "ai_engine": "fallback",
-  "filename": "월별관리카드_2026-04-10.docx"
+  "ai_engine": "claude-sonnet-4",
+  "filename": "월별관리카드_2026-05-02.docx"
 }
