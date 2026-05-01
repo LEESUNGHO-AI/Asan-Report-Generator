@@ -1,7 +1,7 @@
 {
-  "generated": "2026-04-24T18:46:45.445Z",
-  "week": "W17 (04-20 ~ 04-24)",
-  "dday": 251,
+  "generated": "2026-05-01T18:48:06.069Z",
+  "week": "W18 (04-27 ~ 05-01)",
+  "dday": 244,
   "ai_engine": "claude-sonnet-4",
   "bms": {
     "execRate": 41.21,
@@ -10,14 +10,14 @@
   },
   "wbs": {
     "total": 175,
-    "done": 89,
-    "inProg": 61,
-    "delayed": 10,
+    "done": 94,
+    "inProg": 57,
+    "delayed": 9,
     "waiting": 15,
-    "actualRate": 52.3,
-    "achieveRate": 50.9,
+    "actualRate": 57.6,
+    "achieveRate": 53.7,
     "plannedRate": 95
   },
   "issues": 3,
-  "filename": "주간진도보고서_2026-04-24_W17.docx"
+  "filename": "주간진도보고서_2026-05-01_W18.docx"
 }
