@@ -1,7 +1,7 @@
 {
-  "generated": "2026-05-01T18:48:06.069Z",
-  "week": "W18 (04-27 ~ 05-01)",
-  "dday": 244,
+  "generated": "2026-05-08T18:24:59.033Z",
+  "week": "W19 (05-04 ~ 05-08)",
+  "dday": 237,
   "ai_engine": "claude-sonnet-4",
   "bms": {
     "execRate": 41.21,
@@ -19,5 +19,5 @@
     "plannedRate": 95
   },
   "issues": 3,
-  "filename": "주간진도보고서_2026-05-01_W18.docx"
+  "filename": "주간진도보고서_2026-05-08_W19.docx"
 }
