@@ -1,7 +1,7 @@
 {
-  "generated": "2026-06-05T20:29:53.747Z",
-  "week": "W23 (06-01 ~ 06-05)",
-  "dday": 209,
+  "generated": "2026-06-12T20:44:22.330Z",
+  "week": "W24 (06-08 ~ 06-12)",
+  "dday": 202,
   "ai_engine": "claude-sonnet-4",
   "bms": {
     "execRate": 42.08,
@@ -10,14 +10,14 @@
   },
   "wbs": {
     "total": 175,
-    "done": 98,
-    "inProg": 57,
+    "done": 101,
+    "inProg": 54,
     "delayed": 11,
     "waiting": 9,
-    "actualRate": 59.2,
-    "achieveRate": 56,
-    "plannedRate": 63.5
+    "actualRate": 61.3,
+    "achieveRate": 57.7,
+    "plannedRate": 65.3
   },
   "issues": 5,
-  "filename": "주간진도보고서_2026-06-05_W23.docx"
+  "filename": "주간진도보고서_2026-06-12_W24.docx"
 }
