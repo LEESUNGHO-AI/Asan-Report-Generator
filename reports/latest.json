@@ -1,11 +1,11 @@
 {
-  "generated": "2026-06-12T20:44:22.330Z",
-  "week": "W24 (06-08 ~ 06-12)",
-  "dday": 202,
+  "generated": "2026-06-19T21:07:53.140Z",
+  "week": "W25 (06-15 ~ 06-19)",
+  "dday": 195,
   "ai_engine": "claude-sonnet-4",
   "bms": {
-    "execRate": 42.08,
-    "totalExec": 100.98348317,
+    "execRate": 42.52,
+    "totalExec": 102.05027657,
     "totalBudget": 240
   },
   "wbs": {
@@ -19,5 +19,5 @@
     "plannedRate": 65.3
   },
   "issues": 5,
-  "filename": "주간진도보고서_2026-06-12_W24.docx"
+  "filename": "주간진도보고서_2026-06-19_W25.docx"
 }
