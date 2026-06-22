@@ -90,6 +90,7 @@ footer{text-align:center;color:var(--t3);font-size:.72rem;padding:2rem 1.5rem;bo
     <div class="rcard" data-type="monthly" onclick="gen(this)"><div class="card-loading" id="cl-monthly"><div class="cl-spinner"></div><div class="cl-text">생성 중...</div></div><div class="rcard-head"><div class="rcard-icon">🏛️</div><span class="rcard-badge">익월 5일</span></div><h3>월간 추진현황 보고</h3><p>상위기관 제출용 — 재원·비목·단위사업·인력·자산 전체</p><div class="rcard-meta"><span>국토부/충남도</span><span>표준양식</span></div></div>
     <div class="rcard" data-type="quarter" onclick="gen(this)"><div class="card-loading" id="cl-quarter"><div class="cl-spinner"></div><div class="cl-text">생성 중...</div></div><div class="rcard-head"><div class="rcard-icon">📊</div><span class="rcard-badge">분기말+15일</span></div><h3>분기 추진실적 보고</h3><p>분기 실적·성과지표·Level-1 공정·리스크 종합</p><div class="rcard-meta"><span>국토부/충남도</span><span>성과지표</span></div></div>
     <div class="rcard" data-type="annual" onclick="gen(this)"><div class="card-loading" id="cl-annual"><div class="cl-spinner"></div><div class="cl-text">생성 중...</div></div><div class="rcard-head"><div class="rcard-icon">📈</div><span class="rcard-badge">익년 1/31</span></div><h3>연간 성과보고서</h3><p>연간 종합 성과·추진체계·자산·인력 결산</p><div class="rcard-meta"><span>국토부/충남도</span><span>종합 결산</span></div></div>
+    <div class="rcard" data-type="brief" onclick="gen(this)"><div class="card-loading" id="cl-brief"><div class="cl-spinner"></div><div class="cl-text">생성 중...</div></div><div class="rcard-head"><div class="rcard-icon">⭐</div><span class="rcard-badge">수시·보고용</span></div><h3>핵심 보고자료 (2매)</h3><p>아산시 보고용 — 핵심 추진현황·단위사업·예산·이슈 2장 요약</p><div class="rcard-meta"><span>아산시 보고</span><span>2매 핵심</span></div></div>
   </div>
   <div class="status" id="sl"></div>
   <div class="note">※ 보고서는 BMS·WBS·자산관리·인력관리 시스템의 실시간 데이터를 종합 분석하여 공공기관 표준 양식(맑은 고딕·A4·결재란)으로 자동 생성됩니다.</div>
@@ -219,8 +220,16 @@ footer{text-align:center;color:var(--t3);font-size:.72rem;padding:2rem 1.5rem;bo
 
   function processWBS(sum, data) {
     const t = sum.total || {};
+    const cats0 = sum.byCategory || [];
+    // '전체 종합' 행에 건수가 비어있으면(현행화 시 공정률만 입력) 대분류별 합계로 보정
+    const sumCat = (k) => cats0.reduce((a, c) => a + (+c[k] || 0), 0);
+    const hasCnt = (+t.total || 0) > 0;
     const overall = {
-      total: t.total, done: t.done, inProg: t.inProg, delayed: t.delayed, waiting: t.waiting,
+      total: hasCnt ? t.total : sumCat("total"),
+      done: hasCnt ? t.done : sumCat("done"),
+      inProg: hasCnt ? t.inProg : sumCat("inProg"),
+      delayed: hasCnt ? t.delayed : sumCat("delayed"),
+      waiting: hasCnt ? t.waiting : sumCat("waiting"),
       plannedRate: t.plannedRate, actualRate: t.actualRate, achieveRate: t.achieveRate, deviation: t.deviation,
     };
     const byCat = (sum.byCategory || []).map((c) => ({
@@ -782,6 +791,140 @@ footer{text-align:center;color:var(--t3);font-size:.72rem;padding:2rem 1.5rem;bo
 
   return { build };
 });
+/* ════════════════════════════════════════════════════════════════════════
+ *  핵심 보고자료 (2매 이내) — 아산시 보고용 압축 개조식 양식
+ *  buildBrief(docx, P) → docx.Document  (P: {bms,wbs,asset,hr,an,ctx,RC})
+ * ════════════════════════════════════════════════════════════════════════ */
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory();
+  else root.ReportBrief = factory();
+})(typeof self !== "undefined" ? self : this, function () {
+  const FONT = "맑은 고딕";
+  const C = { navy: "1B3A5C", head: "2E5984", line: "BBBBBB", alt: "EEF3F8", gray: "666666", light: "999999", ok: "2E7D32", warn: "B26A00", bad: "C62828", boxbg: "F4F7FB", goldbg: "FFF8E6", gold: "7A5C00" };
+
+  function build(docx, P) {
+    const { Document, Paragraph, TextRun, Table, TableRow, TableCell, Header, Footer,
+      AlignmentType, HeadingLevel, BorderStyle, WidthType, ShadingType, VerticalAlign, PageNumber } = docx;
+    const { bms, wbs, asset, hr, an, ctx, RC } = P;
+    const f1 = RC.f1, f2 = RC.f2, PROJECT = RC.PROJECT;
+    const TW = 9200;
+    const brd = { style: BorderStyle.SINGLE, size: 4, color: C.line };
+    const bo = { top: brd, bottom: brd, left: brd, right: brd };
+    const cm = { top: 30, bottom: 30, left: 70, right: 70 };
+    const shHead = { fill: C.head, type: ShadingType.CLEAR }, shNavy = { fill: C.navy, type: ShadingType.CLEAR };
+    const shAlt = { fill: C.alt, type: ShadingType.CLEAR }, shBox = { fill: C.boxbg, type: ShadingType.CLEAR }, shGold = { fill: C.goldbg, type: ShadingType.CLEAR };
+    const rc = (v) => v >= 80 ? C.ok : v >= 30 ? C.warn : C.bad;
+    const ch = [];
+
+    const run = (t, o = {}) => new TextRun({ text: String(t), font: FONT, size: o.size || 18, bold: o.bold, color: o.color, break: o.break });
+    const hc = (t, w, o = {}) => new TableCell({ borders: bo, width: { size: w, type: WidthType.DXA }, shading: o.navy ? shNavy : shHead, margins: cm, verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({ alignment: o.align || AlignmentType.CENTER, children: [run(t, { bold: true, size: 16, color: "FFFFFF" })] })] });
+    const dc = (t, w, o = {}) => new TableCell({ borders: bo, width: { size: w, type: WidthType.DXA }, margins: cm, shading: o.shade ? shAlt : (o.gold ? shGold : undefined), verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({ alignment: o.align || AlignmentType.LEFT, spacing: { before: 0, after: 0 }, children: [run(t, { size: o.size || 16, bold: o.bold, color: o.color })] })] });
+    const tbl = (w, rows) => new Table({ width: { size: TW, type: WidthType.DXA }, columnWidths: w, rows });
+    // 개조식 글머리
+    const sq = (t, o = {}) => new Paragraph({ spacing: { before: 70, after: 20 }, children: [run("□ ", { bold: true, size: 18, color: C.navy }), run(t, Object.assign({ size: 17, bold: true }, o))] });
+    const ci = (t, o = {}) => new Paragraph({ indent: { left: 250 }, spacing: { before: 8, after: 8 }, children: [run("○ ", { color: C.head, bold: true, size: 16 }), run(t, Object.assign({ size: 16 }, o))] });
+    const H = (t) => new Paragraph({ spacing: { before: 150, after: 60 }, border: { bottom: { style: BorderStyle.SINGLE, size: 8, color: C.navy } }, children: [run(t, { size: 21, bold: true, color: C.navy })] });
+    const box = (kids, o = {}) => new Table({ width: { size: TW, type: WidthType.DXA }, columnWidths: [TW], rows: [new TableRow({ children: [new TableCell({ borders: { top: { style: BorderStyle.SINGLE, size: 6, color: o.line || C.head }, left: { style: BorderStyle.SINGLE, size: 6, color: o.line || C.head }, bottom: { style: BorderStyle.SINGLE, size: 6, color: o.line || C.head }, right: { style: BorderStyle.SINGLE, size: 6, color: o.line || C.head } }, shading: o.gold ? shGold : shBox, margins: { top: 70, bottom: 70, left: 130, right: 130 }, children: Array.isArray(kids) ? kids : [kids] })] })] });
+
+    // ── 제목 ──
+    ch.push(new Paragraph({ alignment: AlignmentType.RIGHT, spacing: { after: 20 }, children: [run(`제일PMO-${ctx.year}-${String(ctx.month).padStart(2, "0")}  |  ${ctx.year}. ${ctx.month}. ${ctx.day}.`, { size: 14, color: C.light })] }));
+    ch.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40, after: 30 }, border: { top: { style: BorderStyle.SINGLE, size: 14, color: C.navy }, bottom: { style: BorderStyle.SINGLE, size: 14, color: C.navy } }, children: [new TextRun({ text: "아산시 강소형 스마트시티 조성사업 추진현황 보고", font: FONT, size: 30, bold: true, color: C.navy, break: 1 }), new TextRun({ text: "", break: 1 })] }));
+    ch.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 60 }, children: [run(`( ${ctx.periodLabel} 기준 · 디지털 OASIS )`, { size: 17, color: C.gray })] }));
+
+    // ── Ⅰ. 사업 개요 (압축 표) ──
+    ch.push(H("Ⅰ. 사업 개요"));
+    const o1 = [1300, 3100, 1300, 3500];
+    ch.push(tbl(o1, [
+      new TableRow({ children: [hc("사업기간", o1[0]), dc(PROJECT.periodLabel, o1[1]), hc("총사업비", o1[2]), dc(`${f1(PROJECT.totalBudget)}억원 (국비 50%·시비 38%·도비 12%)`, o1[3])] }),
+      new TableRow({ children: [hc("위치", o1[0]), dc(PROJECT.location, o1[1]), hc("주관", o1[2]), dc(`${PROJECT.owner} (${PROJECT.ownerManager})`, o1[3])] }),
+      new TableRow({ children: [hc("수행기관", o1[0]), dc("제일엔지니어링(직접보조·PMO) 외 호서대·충남연구원·KAIST(간접보조)", o1[1] + o1[2] + o1[3] + 0, {}), dc("", 0)] }),
+    ]));
+
+    // ── Ⅱ. 핵심 성과지표 ──
+    ch.push(H("Ⅱ. 핵심 성과지표 (KPI)"));
+    const k = [2300, 2300, 2300, 2300];
+    ch.push(tbl(k, [
+      new TableRow({ children: [hc("예산 집행률", k[0], { navy: true }), hc("WBS 실적공정률", k[1], { navy: true }), hc("참여인력(활성)", k[2], { navy: true }), hc("취득자산", k[3], { navy: true })] }),
+      new TableRow({ children: [
+        dc(`${f1(bms.execRate)}%`, k[0], { bold: true, align: AlignmentType.CENTER, size: 24, color: rc(bms.execRate) }),
+        dc(`${f1(wbs.overall.actualRate)}%`, k[1], { bold: true, align: AlignmentType.CENTER, size: 24, color: rc(wbs.overall.actualRate) }),
+        dc(`${hr.active}/${hr.total}명`, k[2], { bold: true, align: AlignmentType.CENTER, size: 24, color: C.navy }),
+        dc(`${asset.total}점`, k[3], { bold: true, align: AlignmentType.CENTER, size: 24, color: C.navy }),
+      ] }),
+      new TableRow({ children: [
+        dc(`${f1(bms.totalExec)}억/${f1(bms.totalBudget)}억`, k[0], { align: AlignmentType.CENTER, size: 13, color: C.gray }),
+        dc(`달성률 ${f1(wbs.overall.achieveRate)}%·지연 ${wbs.overall.delayed}`, k[1], { align: AlignmentType.CENTER, size: 13, color: C.gray }),
+        dc(`가동률 ${f1(hr.rate)}%`, k[2], { align: AlignmentType.CENTER, size: 13, color: C.gray }),
+        dc(`${f1(asset.value)}억원`, k[3], { align: AlignmentType.CENTER, size: 13, color: C.gray }),
+      ] }),
+    ]));
+    ch.push(new Paragraph({ spacing: { before: 30, after: 10 }, children: [run(`※ 준공 D-${ctx.dday}일(약 ${ctx.monthsLeft}개월) · 기간소진율 ${f1(ctx.timePct)}% · 집행률 격차 ${an.gap > 0 ? "▼" : "▲"} ${f1(Math.abs(an.gap))}%p`, { size: 14, color: C.gray })] }));
+
+    // ── Ⅲ. 추진 현황 (개조식) ──
+    ch.push(H("Ⅲ. 추진 현황 (종합)"));
+    an.overview.forEach((o) => {
+      ch.push(sq(o.t));
+      (o.subs || []).forEach((s) => ch.push(ci(s)));
+    });
+
+    // ── Ⅳ. 단위사업별 진행현황 (WBS 사업진행현황 기준) ──
+    ch.push(H("Ⅳ. 단위사업별 진행현황 (WBS 기준)"));
+    if (wbs.units && wbs.units.length) {
+      const uw = [480, 3980, 1280, 1280, 920, 1260];
+      const uRows = [new TableRow({ children: [hc("No", uw[0]), hc("단위사업", uw[1]), hc("계획", uw[2]), hc("실적", uw[3]), hc("편차", uw[4]), hc("상태", uw[5])] })];
+      wbs.units.forEach((u, i) => uRows.push(new TableRow({ children: [
+        dc(u.idx, uw[0], { align: AlignmentType.CENTER, size: 14, shade: i % 2 === 1 }),
+        dc(u.name, uw[1], { bold: true, size: 14, shade: i % 2 === 1 }),
+        dc(f1(u.planned) + "%", uw[2], { align: AlignmentType.CENTER, size: 14, shade: i % 2 === 1 }),
+        dc(f1(u.actual) + "%", uw[3], { align: AlignmentType.CENTER, bold: true, size: 14, color: rc(u.actual), shade: i % 2 === 1 }),
+        dc((u.deviation > 0 ? "+" : "") + f1(u.deviation), uw[4], { align: AlignmentType.CENTER, size: 13, color: u.deviation < 0 ? C.bad : C.ok, shade: i % 2 === 1 }),
+        dc(u.status, uw[5], { align: AlignmentType.CENTER, size: 14, color: u.status === "지연" ? C.bad : u.status === "완료" ? C.ok : C.warn, shade: i % 2 === 1 }),
+      ] })));
+      ch.push(tbl(uw, uRows));
+      const done = wbs.units.filter((u) => u.status === "완료").length;
+      const beh = wbs.units.filter((u) => u.deviation < 0).length;
+      ch.push(new Paragraph({ spacing: { before: 26, after: 4 }, children: [run(`※ 완료 ${done}개·진행중 ${wbs.units.length - done}개, 계획 대비 실적 미달 ${beh}개 — WBS 「서비스 구축」 단위사업 실시간 연동`, { size: 13, color: C.gray })] }));
+    }
+
+    // ── Ⅴ. 예산 집행 요약 (재원별) ──
+    ch.push(H("Ⅴ. 예산 집행 요약 (단위: 억원)"));
+    const sc = [1500, 1400, 1900, 1900, 1300, 1200];
+    const scRows = [new TableRow({ children: [hc("구분", sc[0]), hc("비율", sc[1]), hc("예산", sc[2]), hc("집행", sc[3]), hc("잔액", sc[4]), hc("집행률", sc[5])] })];
+    bms.sources.forEach((s, i) => scRows.push(new TableRow({ children: [dc(s.name, sc[0], { bold: true, align: AlignmentType.CENTER, shade: i % 2 === 1 }), dc(s.rate + "%", sc[1], { align: AlignmentType.CENTER, shade: i % 2 === 1 }), dc(f1(s.budget), sc[2], { align: AlignmentType.RIGHT, shade: i % 2 === 1 }), dc(f1(s.exec), sc[3], { align: AlignmentType.RIGHT, shade: i % 2 === 1 }), dc(f1(s.budget - s.exec), sc[4], { align: AlignmentType.RIGHT, shade: i % 2 === 1 }), dc(f1(bms.execRate) + "%", sc[5], { align: AlignmentType.CENTER, shade: i % 2 === 1 })] })));
+    scRows.push(new TableRow({ children: [dc("합계", sc[0], { bold: true, align: AlignmentType.CENTER, gold: true }), dc("100%", sc[1], { bold: true, align: AlignmentType.CENTER, gold: true }), dc(f1(bms.totalBudget), sc[2], { bold: true, align: AlignmentType.RIGHT, gold: true }), dc(f1(bms.totalExec), sc[3], { bold: true, align: AlignmentType.RIGHT, gold: true }), dc(f1(bms.totalRemain), sc[4], { bold: true, align: AlignmentType.RIGHT, gold: true }), dc(f1(bms.execRate) + "%", sc[5], { bold: true, align: AlignmentType.CENTER, gold: true })] }));
+    ch.push(tbl(sc, scRows));
+    ch.push(new Paragraph({ spacing: { before: 26 }, indent: { left: 250 }, children: [run("○ 인력 ", { size: 15, bold: true, color: C.head }), run(`${hr.active}/${hr.total}명(${hr.orgs.length || 4}개 기관)`, { size: 15 }), run("   ○ 자산 ", { size: 15, bold: true, color: C.head }), run(`${asset.total}점/${f1(asset.value)}억원(등재율 ${f1(asset.issuedRate)}%)`, { size: 15 })] }));
+
+    // ── Ⅵ. 주요 이슈 및 향후 계획 ──
+    ch.push(H("Ⅵ. 주요 이슈 및 향후 계획"));
+    ch.push(new Paragraph({ spacing: { before: 40, after: 10 }, children: [run("◈ 주요 이슈 및 조치", { size: 16, bold: true, color: C.bad })] }));
+    an.issues.slice(0, 3).forEach((it) => ch.push(new Paragraph({ indent: { left: 250 }, spacing: { before: 6, after: 6 }, children: [run(`[${it.grade}] `, { size: 14, bold: true, color: it.grade === "Critical" ? C.bad : it.grade === "High" ? C.warn : C.head }), run(it.issue + " → ", { size: 15 }), run(it.action, { size: 15, color: C.head })] })));
+    ch.push(new Paragraph({ spacing: { before: 60, after: 10 }, children: [run("◈ 향후 추진계획", { size: 16, bold: true, color: C.head })] }));
+    const nm = ctx.month === 12 ? 1 : ctx.month + 1;
+    const plans = [
+      `잔여 ${f1(bms.totalRemain)}억원 적기 집행 (월평균 ${f1(an.monthlyNeed)}억원 목표)`,
+      an.zero.length ? `미착수 ${an.zero.length}개 단위사업 발주 추진 (${nm}월~)` : "잔여 사업 계약·검수 일정 관리",
+      `WBS 지연 ${wbs.overall.delayed}건 만회계획 이행 및 마일스톤 재정렬`,
+      "정산 증빙(인건비·자산) 정비 및 e나라도움/보탬e 연계 점검",
+    ];
+    plans.forEach((t) => ch.push(ci(t)));
+
+    // ── 종합의견 ──
+    ch.push(new Paragraph({ spacing: { before: 80, after: 8 }, children: [run("◈ 종합의견 (PMO)", { size: 17, bold: true, color: C.gold })] }));
+    ch.push(box(new Paragraph({ children: [run(an.judgment, { size: 16 })] }), { gold: true, line: C.gold }));
+
+    return new Document({
+      creator: "제일엔지니어링 PMO", title: "아산시 스마트시티 추진현황 보고(2매)",
+      styles: { default: { document: { run: { font: FONT, size: 18 } } } },
+      sections: [{
+        properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 900, right: 950, bottom: 800, left: 950 } } },
+        footers: { default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER, border: { top: { style: BorderStyle.SINGLE, size: 4, color: C.line } }, children: [run("아산시 강소형 스마트시티 조성사업 · 제일엔지니어링 PMO  ·  ", { size: 13, color: C.light }), new TextRun({ children: [PageNumber.CURRENT], font: FONT, size: 13, color: C.light }), run(" / ", { size: 13, color: C.light }), new TextRun({ children: [PageNumber.TOTAL_PAGES], font: FONT, size: 13, color: C.light })] })] }) },
+        children: ch,
+      }],
+    });
+  }
+  return { build };
+});
 
 /* ════════════════════════════════════════════════════════════════════════
  *  프런트엔드 컨트롤러 — 5개 소스 수집 → 분석 → DOCX 생성·다운로드
@@ -793,8 +936,8 @@ const SRC = {
   asset: "https://leesungho-ai.github.io/Asan-asset-management/data/assets.json",
   hr:    "https://leesungho-ai.github.io/Asan-HR-Management-Portal/index.html",
 };
-const TITLES = { weekly:"주간 진도 보고서", monthly:"월간 추진현황 보고", quarter:"분기 추진실적 보고", annual:"연간 성과보고서" };
-const FILE   = { weekly:"주간진도보고서", monthly:"월간추진현황보고", quarter:"분기추진실적보고", annual:"연간성과보고서" };
+const TITLES = { weekly:"주간 진도 보고서", monthly:"월간 추진현황 보고", quarter:"분기 추진실적 보고", annual:"연간 성과보고서", brief:"핵심 추진현황 보고(2매)" };
+const FILE   = { weekly:"주간진도보고서", monthly:"월간추진현황보고", quarter:"분기추진실적보고", annual:"연간성과보고서", brief:"핵심추진현황보고_2매" };
 const S = { raw:{}, proc:null, busy:false };
 
 function log(t,m){const e=document.getElementById('sl');e.classList.add('show');const c={ok:'ok',warn:'warn',err:'err',info:'info'}[t]||'';e.innerHTML+=`<div class="${c}">${new Date().toLocaleTimeString('ko-KR')} ${m}</div>`;e.scrollTop=e.scrollHeight}
@@ -872,12 +1015,13 @@ async function gen(card){
   S.busy=true;const ov=document.getElementById('cl-'+type);if(ov)ov.classList.add('active');
   document.getElementById('sl').classList.add('show');
   try{
-    const RC=window.ReportCore, RD=window.ReportDoc;
+    const RC=window.ReportCore, RD=window.ReportDoc, RB=window.ReportBrief;
     log('info',`📋 ${TITLES[type]} 생성 시작...`);
     const ctx=buildCtx(type);
     const an=RC.analyze(S.proc.bms,S.proc.wbs,S.proc.asset,S.proc.hr,ctx);
     log('ok',`분석 완료 — 이슈 ${an.issues.length}건 · 미착수 ${an.zero.length}건 도출`);
-    const doc=RD.build(docx,type,{bms:S.proc.bms,wbs:S.proc.wbs,asset:S.proc.asset,hr:S.proc.hr,an,ctx,RC});
+    const P={bms:S.proc.bms,wbs:S.proc.wbs,asset:S.proc.asset,hr:S.proc.hr,an,ctx,RC};
+    const doc=(type==='brief') ? RB.build(docx,P) : RD.build(docx,type,P);
     log('info','📄 DOCX 문서 조립 중...');
     const blob=await docx.Packer.toBlob(doc);
     const td=new Date().toISOString().slice(0,10);
