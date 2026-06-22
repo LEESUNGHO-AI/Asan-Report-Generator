@@ -1,449 +1,895 @@
 <!DOCTYPE html>
-<html lang="ko"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>아산시 스마트시티 | 보고서 생성 시스템</title>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>아산시 스마트시티 | 통합 보고서 생성 시스템</title>
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
 <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <style>
-:root{--bg:#08090f;--card:#111820;--card2:#161f2b;--bdr:#1e2a3a;--t1:#e6edf3;--t2:#7d8ca3;--accent:#00d4aa;--accent2:#7B61FF;--blue:#3b82f6;--red:#ef4444;--amber:#f59e0b;--green:#22c55e;--glow:rgba(0,212,170,.08)}
-*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh}
-.bg{position:fixed;inset:0;z-index:-1;background:radial-gradient(circle at 10% 90%,var(--glow),transparent 50%),radial-gradient(circle at 90% 10%,rgba(123,97,255,.05),transparent 50%),var(--bg)}
-header{background:rgba(17,24,32,.95);border-bottom:1px solid var(--bdr);padding:1rem 2rem;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
-.hc{max-width:1400px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem}
+:root{--bg:#0d1117;--card:#161b22;--card2:#1c2230;--bdr:#2a3441;--accent:#00d4aa;--accent2:#00a88a;--navy:#3b6ea5;--t1:#e6edf3;--t2:#8b9cc7;--t3:#5a6680;--ok:#3fb950;--warn:#d29922;--bad:#f85149}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--t1);line-height:1.6;min-height:100vh}
+.bg{position:fixed;inset:0;background:radial-gradient(1200px 600px at 80% -10%,rgba(0,212,170,.08),transparent),radial-gradient(900px 500px at 10% 10%,rgba(59,110,165,.10),transparent);z-index:-1}
+header{border-bottom:1px solid var(--bdr);background:rgba(13,17,23,.8);backdrop-filter:blur(8px);position:sticky;top:0;z-index:10}
+.hc{max-width:1100px;margin:0 auto;padding:1rem 1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
 .logo{display:flex;align-items:center;gap:.8rem}
-.logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
-.logo h1{font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,var(--accent),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.logo p{font-size:.72rem;color:var(--t2)}
-.hbadge{display:flex;gap:.5rem;align-items:center}
-.hbadge span{font-size:.68rem;padding:3px 10px;border-radius:20px;border:1px solid var(--bdr);color:var(--t2)}
-.hbadge .live{border-color:var(--green);color:var(--green);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-main{max-width:1400px;margin:0 auto;padding:1.5rem 2rem 3rem}
-.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
-@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
-.kpi{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:1.2rem;position:relative;overflow:hidden}
-.kpi::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px}
-.kpi.a::before{background:var(--blue)}.kpi.b::before{background:var(--accent2)}.kpi.c::before{background:var(--amber)}.kpi.d::before{background:var(--red)}
-.kpi-label{font-size:.75rem;color:var(--t2);margin-bottom:.3rem}
-.kpi-val{font-size:1.8rem;font-weight:800}
-.kpi.a .kpi-val{color:var(--blue)}.kpi.b .kpi-val{color:var(--accent2)}.kpi.c .kpi-val{color:var(--amber)}.kpi.d .kpi-val{color:var(--red)}
-.kpi-sub{font-size:.72rem;color:var(--t2);margin-top:.2rem}
-.stitle{font-size:1rem;font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
-.report-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem}
-@media(max-width:700px){.report-grid{grid-template-columns:1fr}}
-.rcard{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:1.5rem;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
-.rcard:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
-.rcard.selected{border-color:var(--accent);box-shadow:0 0 20px var(--glow)}
-.rcard::after{content:'';position:absolute;top:0;left:0;width:4px;height:100%;border-radius:0 2px 2px 0}
-.rcard:nth-child(1)::after{background:var(--green)}.rcard:nth-child(2)::after{background:var(--blue)}.rcard:nth-child(3)::after{background:var(--accent2)}.rcard:nth-child(4)::after{background:var(--amber)}
-.rcard-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.8rem}
-.rcard-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
-.rcard:nth-child(1) .rcard-icon{background:rgba(34,197,94,.12)}.rcard:nth-child(2) .rcard-icon{background:rgba(59,130,246,.12)}.rcard:nth-child(3) .rcard-icon{background:rgba(123,97,255,.12)}.rcard:nth-child(4) .rcard-icon{background:rgba(245,158,11,.12)}
-.rcard-badge{font-size:.65rem;padding:2px 8px;border-radius:12px;border:1px solid var(--bdr);color:var(--t2)}
-.rcard h3{font-size:.95rem;font-weight:700;margin-bottom:.3rem}
-.rcard p{font-size:.75rem;color:var(--t2);line-height:1.5}
-.rcard-meta{display:flex;gap:1rem;margin-top:.8rem;font-size:.7rem;color:var(--t2)}
-.gen-section{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:1.5rem;margin-bottom:1.5rem}
-.gen-options{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem}
-.gen-options label{font-size:.8rem;color:var(--t2);display:flex;align-items:center;gap:.4rem;cursor:pointer}
-.gen-options input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px}
-.gen-btn{background:linear-gradient(135deg,var(--accent),#00a88a);color:#000;border:none;padding:.8rem 2rem;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:.5rem}
-.gen-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,212,170,.3)}
-.gen-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.gen-btn.loading .spinner{display:block}.gen-btn.loading .btn-text{display:none}
-.spinner{width:16px;height:16px;border:2px solid rgba(0,0,0,.2);border-top-color:#000;border-radius:50%;animation:spin .6s linear infinite;display:none}
+.logo-icon{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--navy));display:flex;align-items:center;justify-content:center;font-size:1.4rem}
+.logo h1{font-size:1.15rem;font-weight:800}
+.logo p{font-size:.78rem;color:var(--t2)}
+.hbadge{display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;font-size:.72rem;color:var(--t3)}
+.live{color:var(--accent);font-weight:600}
+.wrap{max-width:1100px;margin:0 auto;padding:1.8rem 1.5rem 4rem}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:2rem}
+.kpi{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:1.1rem 1.2rem;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px;background:var(--accent)}
+.kpi.b::before{background:var(--navy)}.kpi.c::before{background:var(--warn)}.kpi.d::before{background:var(--bad)}.kpi.e::before{background:#a371f7}
+.kpi-label{font-size:.74rem;color:var(--t2);font-weight:600;margin-bottom:.3rem}
+.kpi-val{font-size:1.7rem;font-weight:800;letter-spacing:-.02em}
+.kpi-sub{font-size:.7rem;color:var(--t3);margin-top:.2rem}
+.stitle{font-size:.95rem;font-weight:700;margin:1.6rem 0 .9rem;display:flex;align-items:center;gap:.5rem}
+.report-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1rem}
+.rcard{background:var(--card);border:1px solid var(--bdr);border-radius:16px;padding:1.3rem;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.rcard:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 8px 28px rgba(0,212,170,.12)}
+.rcard.selected{border-color:var(--accent)}
+.rcard-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem}
+.rcard-icon{font-size:1.7rem}
+.rcard-badge{font-size:.66rem;background:var(--card2);color:var(--t2);padding:.25rem .6rem;border-radius:20px;font-weight:600}
+.rcard h3{font-size:1.02rem;font-weight:700;margin-bottom:.35rem}
+.rcard p{font-size:.78rem;color:var(--t2);line-height:1.5;min-height:2.4em}
+.rcard-meta{display:flex;gap:.4rem;margin-top:.8rem;flex-wrap:wrap}
+.rcard-meta span{font-size:.66rem;color:var(--accent);background:rgba(0,212,170,.1);padding:.2rem .55rem;border-radius:6px;font-weight:600}
+.card-loading{position:absolute;inset:0;background:rgba(13,17,23,.92);display:none;flex-direction:column;align-items:center;justify-content:center;gap:.7rem;z-index:5}
+.card-loading.active{display:flex}
+.cl-spinner{width:32px;height:32px;border:3px solid var(--bdr);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+.cl-text{font-size:.8rem;color:var(--accent);font-weight:600}
 @keyframes spin{to{transform:rotate(360deg)}}
-.status{margin-top:1rem;font-size:.78rem;color:var(--t2);line-height:1.8;max-height:200px;overflow-y:auto;padding:.8rem;background:var(--card2);border-radius:8px;font-family:monospace;display:none}
-.status.show{display:block}.status .ok{color:var(--green)}.status .warn{color:var(--amber)}.status .err{color:var(--red)}.status .ai{color:var(--accent2)}
-.settings{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:1.5rem;margin-bottom:1.5rem}
-.settings summary{cursor:pointer;font-size:.85rem;font-weight:600;color:var(--t2);list-style:none;display:flex;align-items:center;gap:.5rem}
-.settings summary::before{content:'';display:block;width:0;height:0;border-left:5px solid var(--t2);border-top:4px solid transparent;border-bottom:4px solid transparent;transition:transform .2s}
-.settings[open] summary::before{transform:rotate(90deg)}
-.settings-body{margin-top:1rem;display:flex;flex-direction:column;gap:.8rem}
-.input-group{display:flex;flex-direction:column;gap:.3rem}
-.input-group label{font-size:.75rem;color:var(--t2)}
-.input-group input{background:var(--card2);border:1px solid var(--bdr);border-radius:8px;padding:.5rem .8rem;color:var(--t1);font-size:.8rem;outline:none;width:100%;max-width:500px}
-.input-group input:focus{border-color:var(--accent)}
-.input-group .hint{font-size:.65rem;color:var(--t2);opacity:.7}
-.history{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:1.5rem}
-.hist-item{display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--bdr);font-size:.78rem}
-.hist-item:last-child{border-bottom:none}.hist-name{font-weight:600}.hist-date{color:var(--t2)}
-.rcard .card-loading{display:none;position:absolute;inset:0;background:rgba(8,9,15,.85);border-radius:14px;
-  display:none;align-items:center;justify-content:center;flex-direction:column;gap:.5rem;z-index:10}
-.rcard .card-loading.active{display:flex}
-.rcard .card-loading .cl-spinner{width:28px;height:28px;border:3px solid rgba(0,212,170,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
-.rcard .card-loading .cl-text{font-size:.75rem;color:var(--accent);font-weight:600}
-footer{text-align:center;padding:2rem;font-size:.7rem;color:var(--t2);border-top:1px solid var(--bdr)}
+.src-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.7rem;margin-bottom:.5rem}
+.src{background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:.7rem .9rem;font-size:.76rem;display:flex;align-items:center;gap:.5rem}
+.src .dot{width:8px;height:8px;border-radius:50%;background:var(--t3);flex-shrink:0}
+.src.ok .dot{background:var(--ok)}.src.err .dot{background:var(--bad)}
+.src .nm{color:var(--t2);font-weight:600}.src .st{margin-left:auto;color:var(--t3);font-size:.7rem}
+.status{margin-top:1rem;background:#0a0e14;border:1px solid var(--bdr);border-radius:10px;padding:.8rem 1rem;font-family:ui-monospace,monospace;font-size:.74rem;max-height:180px;overflow-y:auto;display:none}
+.status.show{display:block}
+.status div{padding:.12rem 0}.status .ok{color:var(--ok)}.status .warn{color:var(--warn)}.status .err{color:var(--bad)}.status .info{color:var(--t2)}
+.history{margin-top:2rem}
+.hist-item{display:flex;justify-content:space-between;padding:.6rem .9rem;background:var(--card);border:1px solid var(--bdr);border-radius:10px;margin-bottom:.5rem;font-size:.8rem}
+.hist-name{font-weight:600}.hist-date{color:var(--t3);font-size:.72rem}
+footer{text-align:center;color:var(--t3);font-size:.72rem;padding:2rem 1.5rem;border-top:1px solid var(--bdr);margin-top:2rem;line-height:1.8}
+.note{font-size:.72rem;color:var(--t3);margin-top:.5rem}
 </style>
-</head><body>
+</head>
+<body>
 <div class="bg"></div>
-<header><div class="hc"><div class="logo"><div class="logo-icon">📋</div><div><h1>보고서 생성 시스템</h1><p>아산시 강소형 스마트시티 조성사업</p></div></div><div class="hbadge"><span class="live" id="dataStatus">로딩 중...</span><span id="lastUpdate">-</span></div></div></header>
-<main>
-<div class="kpi-grid">
-  <div class="kpi a"><div class="kpi-label">예산 집행률</div><div class="kpi-val" id="k1">-</div><div class="kpi-sub" id="k1s">-</div></div>
-  <div class="kpi b"><div class="kpi-label">WBS 공정률</div><div class="kpi-val" id="k2">-</div><div class="kpi-sub" id="k2s">-</div></div>
-  <div class="kpi c"><div class="kpi-label">기간 소진율</div><div class="kpi-val" id="k3">-</div><div class="kpi-sub" id="k3s">-</div></div>
-  <div class="kpi d"><div class="kpi-label">D-Day</div><div class="kpi-val" id="k4">-</div><div class="kpi-sub" id="k4s">-</div></div>
-</div>
-<div class="stitle">📄 보고서 유형 선택</div>
-<div class="report-grid" id="rg">
-  <div class="rcard selected" data-type="weekly" onclick="genDirect(this)"><div class="card-loading" id="cl-weekly"><div class="cl-spinner"></div><div class="cl-text">생성 중...</div></div><div class="rcard-head"><div class="rcard-icon">📋</div><span class="rcard-badge">매주 금요일</span></div><h3>주간 진도 보고서</h3><p>금주 성과, 예산 집행, WBS 공정률, AI 이슈 분석, 차주 계획</p><div class="rcard-meta"><span>PMO 내부</span><span>AI 분석 포함</span></div></div>
-  <div class="rcard" data-type="monthly" onclick="genDirect(this)"><div class="card-loading" id="cl-monthly"><div class="cl-spinner"></div><div class="cl-text">생성 중...</div></div><div class="rcard-head"><div class="rcard-icon">🏛️</div><span class="rcard-badge">익월 5일</span></div><h3>월별 관리카드</h3><p>국토부 제출, 재원별/비목별 집행, 세부사업별 현황</p><div class="rcard-meta"><span>국토교통부</span><span>표준양식</span></div></div>
-  <div class="rcard" data-type="quarter" onclick="genDirect(this)"><div class="card-loading" id="cl-quarter"><div class="cl-spinner"></div><div class="cl-text">생성 중...</div></div><div class="rcard-head"><div class="rcard-icon">📊</div><span class="rcard-badge">분기종료+15일</span></div><h3>분기 보고서</h3><p>분기 실적, 성과지표 달성, Level-1 WBS 상세</p><div class="rcard-meta"><span>국토교통부</span><span>성과지표</span></div></div>
-  <div class="rcard" data-type="annual" onclick="genDirect(this)"><div class="card-loading" id="cl-annual"><div class="cl-spinner"></div><div class="cl-text">생성 중...</div></div><div class="rcard-head"><div class="rcard-icon">📈</div><span class="rcard-badge">익년 1/31</span></div><h3>연간 성과보고서</h3><p>연간 종합, 추진체계, 성과 분석</p><div class="rcard-meta"><span>국토교통부</span><span>종합 성과</span></div></div>
-</div>
-<div class="gen-section">
-  <div class="gen-options"><label><input type="checkbox" id="useAI" checked> Claude AI 분석</label><label><input type="checkbox" id="incDel" checked> 지연 작업 부록</label></div>
+<header><div class="hc">
+  <div class="logo"><div class="logo-icon">📑</div><div><h1>통합 보고서 생성 시스템</h1><p>아산시 강소형 스마트시티 조성사업 · 공공기관 표준양식 v4.0</p></div></div>
+  <div class="hbadge"><span class="live" id="dataStatus">로딩 중...</span><span id="lastUpdate">-</span></div>
+</div></header>
+
+<div class="wrap">
+  <div class="kpi-grid">
+    <div class="kpi a"><div class="kpi-label">예산 집행률</div><div class="kpi-val" id="k1">-</div><div class="kpi-sub" id="k1s">-</div></div>
+    <div class="kpi b"><div class="kpi-label">WBS 공정률</div><div class="kpi-val" id="k2">-</div><div class="kpi-sub" id="k2s">-</div></div>
+    <div class="kpi e"><div class="kpi-label">참여인력(활성)</div><div class="kpi-val" id="k5">-</div><div class="kpi-sub" id="k5s">-</div></div>
+    <div class="kpi c"><div class="kpi-label">취득자산</div><div class="kpi-val" id="k6">-</div><div class="kpi-sub" id="k6s">-</div></div>
+    <div class="kpi d"><div class="kpi-label">준공까지</div><div class="kpi-val" id="k4">-</div><div class="kpi-sub" id="k4s">-</div></div>
+  </div>
+
+  <div class="stitle">🔗 실시간 데이터 소스 (Slack → Notion → GitHub Pages)</div>
+  <div class="src-grid">
+    <div class="src" id="src-bms"><span class="dot"></span><span class="nm">예산 BMS</span><span class="st">대기</span></div>
+    <div class="src" id="src-wbs"><span class="dot"></span><span class="nm">공정 WBS</span><span class="st">대기</span></div>
+    <div class="src" id="src-hr"><span class="dot"></span><span class="nm">참여인력</span><span class="st">대기</span></div>
+    <div class="src" id="src-asset"><span class="dot"></span><span class="nm">자산관리</span><span class="st">대기</span></div>
+  </div>
+
+  <div class="stitle">📄 보고서 유형 선택 (클릭 시 즉시 생성·다운로드)</div>
+  <div class="report-grid" id="rg">
+    <div class="rcard selected" data-type="weekly" onclick="gen(this)"><div class="card-loading" id="cl-weekly"><div class="cl-spinner"></div><div class="cl-text">생성 중...</div></div><div class="rcard-head"><div class="rcard-icon">📋</div><span class="rcard-badge">매주 금요일</span></div><h3>주간 진도 보고서</h3><p>금주 추진현황·예산·공정·인력·자산 종합 및 차주 계획</p><div class="rcard-meta"><span>PMO 내부</span><span>5종 데이터</span></div></div>
+    <div class="rcard" data-type="monthly" onclick="gen(this)"><div class="card-loading" id="cl-monthly"><div class="cl-spinner"></div><div class="cl-text">생성 중...</div></div><div class="rcard-head"><div class="rcard-icon">🏛️</div><span class="rcard-badge">익월 5일</span></div><h3>월간 추진현황 보고</h3><p>상위기관 제출용 — 재원·비목·단위사업·인력·자산 전체</p><div class="rcard-meta"><span>국토부/충남도</span><span>표준양식</span></div></div>
+    <div class="rcard" data-type="quarter" onclick="gen(this)"><div class="card-loading" id="cl-quarter"><div class="cl-spinner"></div><div class="cl-text">생성 중...</div></div><div class="rcard-head"><div class="rcard-icon">📊</div><span class="rcard-badge">분기말+15일</span></div><h3>분기 추진실적 보고</h3><p>분기 실적·성과지표·Level-1 공정·리스크 종합</p><div class="rcard-meta"><span>국토부/충남도</span><span>성과지표</span></div></div>
+    <div class="rcard" data-type="annual" onclick="gen(this)"><div class="card-loading" id="cl-annual"><div class="cl-spinner"></div><div class="cl-text">생성 중...</div></div><div class="rcard-head"><div class="rcard-icon">📈</div><span class="rcard-badge">익년 1/31</span></div><h3>연간 성과보고서</h3><p>연간 종합 성과·추진체계·자산·인력 결산</p><div class="rcard-meta"><span>국토부/충남도</span><span>종합 결산</span></div></div>
+  </div>
   <div class="status" id="sl"></div>
+  <div class="note">※ 보고서는 BMS·WBS·자산관리·인력관리 시스템의 실시간 데이터를 종합 분석하여 공공기관 표준 양식(맑은 고딕·A4·결재란)으로 자동 생성됩니다.</div>
+
+  <div class="history"><div class="stitle">🗂️ 생성 이력</div><div id="hl"></div></div>
 </div>
-<details class="settings"><summary>⚙️ 설정</summary><div class="settings-body">
-  <div class="input-group"><label>Anthropic API Key</label><input type="password" id="ak" placeholder="sk-ant-api03-..."><span class="hint">브라우저에 저장. 없으면 Fallback 분석 사용</span></div>
-  <button style="align-self:flex-start;background:var(--accent);color:#000;border:none;padding:.4rem 1rem;border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer" onclick="localStorage.setItem('ak',document.getElementById('ak').value);log('ok','✅ 저장 완료')">저장</button>
-</div></details>
-<div class="history"><div class="stitle">🗂️ 생성 이력</div><div id="hl"></div></div>
-</main>
-<footer>아산시 강소형 스마트시티 조성사업 | 보고서 생성 시스템 v3.0 | 제일엔지니어링 PMO팀<br>BMS + WBS 실시간 · Claude AI · DOCX 자동 생성</footer>
+<footer>아산시 강소형 스마트시티 조성사업 · 통합 보고서 생성 시스템 v4.0 · 제일엔지니어링 PMO팀<br>BMS · WBS · 자산관리 · 인력관리 실시간 연동 → 공공기관 표준 보고서(DOCX) 자동 생성</footer>
+
+<!-- ════════ 보고서 엔진 (Core + DOCX Builder) ════════ -->
 <script>
-let S={bms:null,ws:null,wd:null,type:'weekly',busy:false};
-const BU="https://leesungho-ai.github.io/Asan-Smart-City-Budget-Management-System-BMS-/data/budget.json",
-WU="https://leesungho-ai.github.io/Asan-Smartcity-WBS/data/summary-data.json",
-WD="https://leesungho-ai.github.io/Asan-Smartcity-WBS/data/wbs-data.json",
-PS=new Date("2023-12-01"),PE=new Date("2026-12-31");
-const BM={"스마트 공공 WIFI":1,"아산시 강소형 스마트시티 네트워크 구축":1,"모바일 전자시민증 플랫폼 / 인프라":2,"디지털 노마드접수/운영 및 거래관리":12,"데이터기반 AI 융복합 서비스 구축":13,"국제표준 디지털링크 공유 플랫폼":14,"이노베이션 센터/ 관제 시스템 구축":3,"디지털 OASIS SPOT":4,"무인매장":4,"SDDC Platform 구축":5,"AI통합관제 및 운영 플랫폼 / 인프라":6,"디지털OASIS 정보관리 시스템":7,"수요응답형 DRT 서비스 운영 플랫폼 구축":8,"수요응답형 DRT 서비스 운영 HW 구축":8,"정보통신감리":9,"스마트폴&디스플레이":10,"메타버스 플랫폼":11};
-const NM={1:"유무선 네트워크 구축",2:"모바일 전자시민증(ECC)",3:"이노베이션 센터 구축",4:"디지털 OASIS SPOT",5:"SDDC Platform 구축",6:"AI 통합관제 플랫폼",7:"디지털 OASIS 정보관리",8:"DRT 수요응답형 교통",9:"감리용역",10:"스마트폴&디스플레이",11:"메타버스 플랫폼",12:"디지털 노마드(NOP)",13:"AI 융복합 서비스",14:"디지털링크 플랫폼"};
-window.addEventListener('load',async()=>{document.getElementById('ak').value=localStorage.getItem('ak')||'';loadH();await loadD()});
-function sel(e){document.querySelectorAll('.rcard').forEach(c=>c.classList.remove('selected'));e.classList.add('selected');S.type=e.dataset.type}
-async function genDirect(el){
-  if(typeof docx==='undefined'){log('err','❌ docx 라이브러리 로딩 중... 잠시 후 다시 클릭해주세요');return;}
-  const type=el.dataset.type;if(S.busy||!S.bms)return;
-  sel(el);S.busy=true;
-  const overlay=document.getElementById('cl-'+type);
-  if(overlay)overlay.classList.add('active');
+/* ════════════════════════════════════════════════════════════════════════
+ *  아산시 강소형 스마트시티 조성사업 — 통합 보고서 생성 엔진 (Core)
+ *  ────────────────────────────────────────────────────────────────────────
+ *  5개 데이터 소스(BMS·WBS·자산·인력·통합포털)를 종합 분석하여
+ *  공공기관 표준 보고서(DOCX)를 생성한다.
+ *
+ *  본 파일은 Node(검증/Actions)와 브라우저(GitHub Pages) 양쪽에서 동작하도록
+ *  docx 객체를 외부에서 주입(inject)받는 구조로 작성되었다.
+ * ════════════════════════════════════════════════════════════════════════ */
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory();
+  else root.ReportCore = factory();
+})(typeof self !== "undefined" ? self : this, function () {
+
+  // ══════════════ 사업 기본정보 (고정 메타데이터) ══════════════
+  const PROJECT = {
+    name: "아산시 강소형 스마트시티 조성사업",
+    brand: "디지털 OASIS",
+    type: "기존도시형 — 지역소멸 대응 / 인구변화 대응",
+    location: "충청남도 아산시 도고면·배방읍 일원",
+    periodLabel: "2023. 12. ~ 2026. 12. 31. (구축 3년)",
+    startDate: new Date("2023-12-01"),
+    endDate: new Date("2026-12-31"),
+    totalBudget: 240, // 억원
+    fund: { 국비: { rate: 50, amt: 120 }, 시비: { rate: 38, amt: 91.2 }, 도비: { rate: 12, amt: 28.8 } },
+    owner: "아산시 스마트도시팀",
+    ownerManager: "박상국 팀장",
+    pmo: "(주)제일엔지니어링종합건축사사무소",
+    consortium: [
+      { org: "(주)제일엔지니어링종합건축사사무소", role: "직접보조사업자 (수행·총괄 PMO)", scope: "사업관리(PMO)·발주지원·정산·인프라" },
+      { org: "호서대학교 산학협력단", role: "간접보조사업자", scope: "이노베이션 스퀘어 운영·실증" },
+      { org: "충남연구원", role: "간접보조사업자", scope: "정책연구·성과지표 설계" },
+      { org: "한국과학기술원(KAIST)", role: "간접보조사업자", scope: "AI·데이터 기술자문" },
+    ],
+  };
+
+  // BMS 항목명 → 단위사업 번호 매핑
+  const BMS_UNIT_MAP = {
+    "스마트 공공 WIFI": 1, "아산시 강소형 스마트시티 네트워크 구축": 1, "네트워크 구축": 1,
+    "모바일 전자시민증 플랫폼 / 인프라": 2,
+    "이노베이션센터 구축": 3, "이노베이션 센터/ 관제 시스템 구축": 3,
+    "디지털 OASIS SPOT": 4, "무인매장": 4,
+    "SDDC Platform 구축": 5,
+    "AI통합관제 및 운영 플랫폼 / 인프라": 6,
+    "디지털OASIS 정보관리 시스템": 7,
+    "수요응답형 DRT 서비스 운영 플랫폼 구축": 8, "수요응답형 DRT 서비스 운영 HW 구축": 8,
+    "정보통신감리": 9,
+    "스마트폴&디스플레이": 10,
+    "메타버스 플랫폼": 11,
+    "디지털 노마드접수/운영 및 거래관리": 12,
+    "데이터기반 AI 융복합 서비스 구축": 13,
+    "국제표준 디지털링크 공유 플랫폼": 14,
+    "시설물 위치기반 표준 서비스 플랫폼": 14,
+  };
+  const UNIT_NAMES = {
+    1: "유무선 네트워크 구축", 2: "모바일 전자시민증(ECC)", 3: "이노베이션 스퀘어 구축",
+    4: "디지털 OASIS SPOT·무인매장", 5: "SDDC Platform 구축", 6: "AI 통합관제 플랫폼",
+    7: "디지털 OASIS 정보관리", 8: "DRT 수요응답형 교통", 9: "정보통신 감리용역",
+    10: "스마트폴 & 디스플레이", 11: "메타버스 플랫폼", 12: "디지털 노마드(NOP)",
+    13: "AI 융복합 서비스", 14: "디지털링크 표준 플랫폼",
+  };
+  const BIMOK_CLEAN = {
+    "인건비(110)": "인건비", "운영비(210)": "운영비", "여비(220)": "여비",
+    "연구개발비(260)": "연구개발비", "사업비배분(320)": "사업비 배분", "사업비 배분(320)": "사업비 배분",
+    "유형자산(430)": "유형자산", "무형자산(440)": "무형자산(SW)", "건설비(420)": "건설비", "기타": "기타",
+  };
+  const BIMOK_ORDER = ["건설비", "무형자산(SW)", "유형자산", "인건비", "연구개발비", "운영비", "여비", "사업비 배분", "기타"];
+
+  const won = (v) => (v / 1e8); // 원 → 억원
+  const f1 = (v) => Number(v).toFixed(1);
+  const f2 = (v) => Number(v).toFixed(2);
+
+  // ══════════════ 데이터 프로세서 ══════════════
+  function processBMS(bms) {
+    const s = bms.summary || {};
+    const totalBudget = won(s["총사업비"] || 0);
+    const totalExec = won(s["총집행액"] || 0);
+    const totalRemain = won((s["총잔액"] != null ? s["총잔액"] : s["잔액"]) || 0);
+    const execRate = s["전체집행률"] || 0;
+    const statusCnt = s["상태별"] || {};
+
+    // 재원별 (국·시·도비) — 비율 기준 안분 집행 추정
+    const sources = (bms.source_summary || []).map((r) => ({
+      name: r["재원"], rate: r["비율"], budget: won(r["금액"]),
+      exec: won(r["금액"] * (execRate / 100)),
+    }));
+
+    // 비목별
+    const mg = {};
+    for (const b of bms.bimok_summary || []) {
+      const nm = BIMOK_CLEAN[b["비목"]] || b["비목"];
+      if (!mg[nm]) mg[nm] = { b: 0, e: 0, cnt: 0 };
+      mg[nm].b += won(b["예산"] || 0); mg[nm].e += won(b["집행"] || 0); mg[nm].cnt += (b["항목수"] || 0);
+    }
+    const cats = [];
+    for (const nm of BIMOK_ORDER) if (mg[nm]) {
+      const m = mg[nm];
+      cats.push({ name: nm, budget: m.b, exec: m.e, remain: m.b - m.e, rate: m.b ? (m.e / m.b * 100) : 0, cnt: m.cnt });
+    }
+
+    // 단위사업별
+    const units = {}; let commonB = 0, commonE = 0;
+    for (const it of bms.items || []) {
+      const num = BMS_UNIT_MAP[it["항목명"]];
+      const ex = it["집행액"] != null ? it["집행액"] : (it["사용금액합계"] || it["사용금액"] || 0);
+      if (num) { if (!units[num]) units[num] = { b: 0, e: 0 }; units[num].b += won(it["총예산"] || 0); units[num].e += won(ex); }
+      else { commonB += won(it["총예산"] || 0); commonE += won(ex); }
+    }
+    const projects = [];
+    for (const num of Object.keys(UNIT_NAMES).map(Number).sort((a, b) => a - b)) {
+      const u = units[num] || { b: 0, e: 0 };
+      if (u.b === 0 && u.e === 0) continue;
+      projects.push({ num, name: UNIT_NAMES[num], budget: u.b, exec: u.e, remain: u.b - u.e, rate: u.b ? (u.e / u.b * 100) : 0 });
+    }
+    return { totalBudget, totalExec, totalRemain, execRate, statusCnt, sources, cats, projects, commonB, commonE, itemCount: s["항목수"] || (bms.items || []).length };
+  }
+
+  function processWBS(sum, data) {
+    const t = sum.total || {};
+    const overall = {
+      total: t.total, done: t.done, inProg: t.inProg, delayed: t.delayed, waiting: t.waiting,
+      plannedRate: t.plannedRate, actualRate: t.actualRate, achieveRate: t.achieveRate, deviation: t.deviation,
+    };
+    const byCat = (sum.byCategory || []).map((c) => ({
+      name: c.name, total: c.total, done: c.done, inProg: c.inProg, delayed: c.delayed, waiting: c.waiting,
+      plannedRate: c.plannedRate, actualRate: c.actualRate, deviation: c.deviation, achieveRate: c.achieveRate,
+    }));
+    // Level-1 단위사업
+    const lvl1 = [];
+    const isDateish = (s) => /GMT|\d{4}|Mon |Tue |Wed |Thu |Fri |Sat |Sun /.test(String(s || ""));
+    for (const r of data.items || []) {
+      if (String(r.level) !== "1") continue;
+      const nm = r.name.replace(/^\[[^\]]+\]\s*/, "");
+      if (nm === "범례" || r.wbsId === "범례") continue; // 범례 행 제외
+      const org = isDateish(r.organization) ? "제일엔지니어링" : (r.organization || "제일엔지니어링");
+      lvl1.push({ wbsId: r.wbsId, name: nm, category: r.category, org, weight: r.weight, planned: r.plannedRate, actual: r.actualRate, deviation: r.deviation, status: r.status });
+    }
+    // 지연 작업 (level 2+)
+    const delayed = (data.items || []).filter((r) => r.status === "지연" && String(r.level) !== "1").map((r) => ({
+      wbsId: r.wbsId, name: r.name.replace(/^\[[^\]]+\]\s*/, ""), org: r.organization,
+      planned: r.plannedRate, actual: r.actualRate, deviation: r.deviation, endDate: r.endDate, note: r.note,
+    }));
+    return { overall, byCat, lvl1, delayed };
+  }
+
+  function processAsset(a) {
+    const s = a.summary || {};
+    const byCat = Object.keys(s.by_category || {}).map((k) => ({
+      name: k, count: s.by_category[k], value: won((s.by_category_value || {})[k] || 0),
+    })).sort((x, y) => y.value - x.value);
+    const byMgr = Object.keys(s.by_manager || {}).map((k) => ({ name: k, count: s.by_manager[k] }))
+      .sort((x, y) => y.count - x.count);
+    const byLoc = Object.keys(s.by_location || {}).map((k) => ({ name: k, count: s.by_location[k] }))
+      .sort((x, y) => y.count - x.count);
+    return {
+      total: s.total_assets || 0, value: won(s.total_value || 0),
+      inUse: (s.by_status || {})["사용중"] || 0, standby: (s.by_status || {})["대기중"] || 0,
+      issuedRate: s.issued_rate != null ? s.issued_rate : 0, byCat, byMgr, byLoc,
+      syncedAt: (a.meta || {}).synced_at || "",
+    };
+  }
+
+  // HR: 동기 JSON이 있으면 그대로, 없으면 HTML 파싱
+  function processHR(input) {
+    // JSON 형태
+    if (input && typeof input === "object" && input.orgs) return input;
+    const html = String(input || "");
+    const orgs = [];
+    // 테이블 행: <tr><td>[기관명]</td><td>N명</td>×3 <td>NN.N%</td>
+    const re = /<tr>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>\s*(\d+)\s*명\s*<\/td>\s*<td[^>]*>\s*(\d+)\s*명\s*<\/td>\s*<td[^>]*>\s*(\d+)\s*명\s*<\/td>\s*<td[^>]*>\s*([\d.]+)\s*%/g;
+    let m;
+    while ((m = re.exec(html))) {
+      const nm = m[1].replace(/<[^>]+>/g, "").trim();
+      if (!nm || nm === "합계" || nm.length > 40) continue;
+      orgs.push({ org: nm, total: +m[2], active: +m[3], ended: +m[4], rate: +m[5] });
+    }
+    // KPI fallback
+    const kpiTotal = (html.match(/class="sv">(\d+)<\/div><div class="ss">[^<]*기관/) || [])[1];
+    const total = orgs.reduce((a, o) => a + o.total, 0) || (+kpiTotal || 0);
+    const active = orgs.reduce((a, o) => a + o.active, 0);
+    const ended = orgs.reduce((a, o) => a + o.ended, 0);
+    return { total, active, ended, rate: total ? +(active / total * 100).toFixed(1) : 0, orgs };
+  }
+
+  // ══════════════ 분석(데이터 기반 자동 · 개조식) ══════════════
+  function analyze(bms, wbs, asset, hr, ctx) {
+    const { dday, timePct, monthsLeft } = ctx;
+    const gap = (timePct - bms.execRate);
+    const monthlyNeed = monthsLeft > 0 ? bms.totalRemain / monthsLeft : 0;
+    const wbsGap = (wbs.overall.plannedRate || 0) - (wbs.overall.actualRate || 0);
+
+    const zero = bms.projects.filter((p) => p.rate < 1 && p.budget >= 3);
+    const high = bms.projects.filter((p) => p.rate >= 80);
+    const low = bms.projects.filter((p) => p.rate > 0 && p.rate < 30 && p.budget >= 3);
+
+    // ── 보고 개요(요약) — 개조식 □/○ ──
+    const overview = [
+      { t: `예산 집행: 집행률 ${f1(bms.execRate)}%(${f1(bms.totalExec)}억/${f1(bms.totalBudget)}억원), 잔액 ${f1(bms.totalRemain)}억원`, subs: [] },
+      { t: `공정 추진: WBS 실적공정률 ${f1(wbs.overall.actualRate)}%(달성률 ${f1(wbs.overall.achieveRate)}%), 완료 ${wbs.overall.done}건·진행 ${wbs.overall.inProg}건·지연 ${wbs.overall.delayed}건`, subs: [] },
+      { t: `인력·자산: 참여인력 ${hr.total}명(활성 ${hr.active}명, ${hr.orgs.length || 4}개 기관)·취득자산 ${asset.total}점(${f1(asset.value)}억원) 운영`, subs: [] },
+      { t: `핵심 과제: 준공 D-${dday}일(약 ${monthsLeft}개월), 기간소진율(${f1(timePct)}%) 대비 집행률 ${gap > 0 ? f1(Math.abs(gap)) + "%p 미달" : "양호"}`, subs: [
+        gap > 0 ? `잔여 예산 ${f1(bms.totalRemain)}억원 적기 집행(월평균 ${f1(monthlyNeed)}억원) 및 미착수 ${zero.length}건 발주 가속 필요` : `집행 속도 양호, 잔여 사업 검수·정산 중심 관리 필요`,
+        wbs.overall.delayed > 0 ? `WBS 지연 ${wbs.overall.delayed}건 만회계획 수립·이행 필요` : `공정 지연 없음, 현 수준 유지`,
+      ] },
+    ];
+
+    // ── 섹션별 개조식 포인트 ──
+    const budgetPoints = [
+      `총사업비 ${f1(bms.totalBudget)}억원 중 ${f1(bms.totalExec)}억원 집행(집행률 ${f1(bms.execRate)}%), 잔액 ${f1(bms.totalRemain)}억원`,
+      `잔여 약 ${monthsLeft}개월 내 집행 위해 월평균 ${f1(monthlyNeed)}억원 집행 필요`,
+      high.length ? `집행 완료(80% 이상) ${high.length}개 사업 — 검수·산출물 확정 단계 전환` : `고집행 사업 없음 — 발주·계약 가속 필요`,
+      zero.length ? `미착수(예산 3억 이상) ${zero.length}개 사업 — 발주계획 수립 및 행정절차 착수 필요` : `미착수 대형 사업 없음`,
+    ];
+    const wbsPoints = [
+      `전체 ${wbs.overall.total}건 중 완료 ${wbs.overall.done}건(${f1(wbs.overall.done / wbs.overall.total * 100)}%)·진행 ${wbs.overall.inProg}건·지연 ${wbs.overall.delayed}건·대기 ${wbs.overall.waiting}건`,
+      `계획공정률 ${f1(wbs.overall.plannedRate)}% 대비 실적 ${f1(wbs.overall.actualRate)}%로 ${f1(Math.abs(wbsGap))}%p ${wbsGap > 0 ? "미달" : "초과 달성"}`,
+      wbs.overall.delayed > 0 ? `지연 ${wbs.overall.delayed}건 원인 분석 및 만회(Catch-up) 일정 재수립 필요` : `지연 작업 없음 — 현 공정 유지`,
+    ];
+    const hrPoints = [
+      `${hr.orgs.length || 4}개 기관 ${hr.total}명 등록, 활성 ${hr.active}명(가동률 ${f1(hr.rate)}%)`,
+      `직접보조사업자(제일엔지니어링) 중심 PMO·정산·인프라 수행, 간접보조사업자 실증·연구·기술자문 분담`,
+      `인건비는 실투입단가(실지급액×참여기간×참여율) 기준 정산`,
+    ];
+    const assetPoints = [
+      `취득자산 ${asset.total}점, 취득가액 ${f1(asset.value)}억원(사용중 ${asset.inUse}점·대기 ${asset.standby}점)`,
+      `자산관리대장 등재율 ${f1(asset.issuedRate)}%`,
+      asset.byCat[0] ? `분류별 최대 가액: ${asset.byCat[0].name}(${f1(asset.byCat[0].value)}억원), 라벨링·배치 관리 진행` : `분류 정보 없음`,
+    ];
+
+    // ── 이슈 ──
+    const issues = [];
+    issues.push({
+      issue: `예산 집행률 격차(기간소진율 ${f1(timePct)}% 대비 집행률 ${f1(bms.execRate)}%)`,
+      impact: `${f1(Math.abs(gap))}%p ${gap > 0 ? "미달" : "초과"}, 잔여 ${f1(bms.totalRemain)}억원 집행 필요`,
+      action: "미착수 대형 단위사업 발주 가속, 비목 전용 검토",
+      grade: gap > 15 ? "Critical" : gap > 8 ? "High" : "Medium",
+    });
+    zero.slice(0, 3).forEach((p) => issues.push({
+      issue: `${p.name} 미착수(예산 ${f1(p.budget)}억원)`,
+      impact: "공정·집행 동반 지연, 사업기간 내 준공 리스크",
+      action: "발주계획 수립 및 행정절차(사전규격·협상계약) 착수",
+      grade: p.budget >= 20 ? "High" : "Medium",
+    }));
+    if (wbs.overall.delayed > 3) issues.push({
+      issue: `WBS 지연 작업 ${wbs.overall.delayed}건(계획 대비 ${f1(wbsGap)}%p 미달)`,
+      impact: "전체 공정 만회 부담 가중",
+      action: "지연 원인 분석 및 만회(Catch-up) 일정 재수립",
+      grade: wbs.overall.delayed > 8 ? "High" : "Medium",
+    });
+
+    // ── 주요 성과 (개조식 명사형) ──
+    const achievements = [
+      `예산집행관리시스템(BMS) 기준 누계 집행 ${f1(bms.totalExec)}억원·집행률 ${f1(bms.execRate)}% 달성(${bms.itemCount}개 세부항목 실시간 관리)`,
+      `WBS 공정 ${wbs.overall.total}건 중 완료 ${wbs.overall.done}건·진행 ${wbs.overall.inProg}건 관리, 실적공정률 ${f1(wbs.overall.actualRate)}%(달성률 ${f1(wbs.overall.achieveRate)}%)`,
+      `참여인력 ${hr.total}명(활성 ${hr.active}명) ${hr.orgs.length || 4}개 기관 컨소시엄 투입·운영, 기관별 인건비 정산 연계`,
+      `취득자산 ${asset.total}점(취득가액 ${f1(asset.value)}억원) 자산관리대장 등재·라벨링·배치 관리(등재율 ${f1(asset.issuedRate)}%)`,
+    ];
+
+    // ── 권고 (개조식 명사형) ──
+    const recos = [];
+    if (gap > 5) recos.push(`집행 가속화 — 잔여 약 ${monthsLeft}개월/월평균 ${f1(monthlyNeed)}억원 집행 목표 설정, 미착수 ${zero.length}개 사업 우선 발주`);
+    if (zero.length) recos.push(`발주 일정 역산 관리 — 준공(${ctx.year}.12.31) 기준 검수·정산 소요기간 확보 위해 대형 미착수 사업 계약체결 마감선 명확화`);
+    if (wbs.overall.delayed > 0) recos.push(`공정 만회 — 지연 ${wbs.overall.delayed}건 만회계획 수립 및 주간 단위 추적, 마일스톤 재정렬`);
+    recos.push(`정산 대비 — 인건비(실투입단가)·자산취득 증빙의 e나라도움/보탬e 연계 점검 및 감사 대응 문서 정비`);
+    if (high.length) recos.push(`완료 사업 전환 — 집행 완료 ${high.length}건 검수·성과 산출물 확정`);
+
+    const judgment = `기간소진율 대비 집행률 격차(${f1(Math.abs(gap))}%p)와 지연 ${wbs.overall.delayed}건의 동시 관리가 사업 성패의 핵심임. 잔여 ${monthsLeft}개월간 미착수 사업 발주 가속과 정산 증빙 정비 병행 추진 필요.`;
+
+    return {
+      overview, budgetPoints, wbsPoints, hrPoints, assetPoints,
+      achievements, issues, recos, judgment,
+      zero, high, low, monthlyNeed, gap, wbsGap,
+    };
+  }
+
+  return { PROJECT, UNIT_NAMES, processBMS, processWBS, processAsset, processHR, analyze, won, f1, f2 };
+});
+/* ════════════════════════════════════════════════════════════════════════
+ *  보고서 DOCX 빌더 — 공공기관 표준 양식
+ *  buildReport(docx, type, P) → docx.Document
+ *  type: 'weekly' | 'monthly' | 'quarter' | 'annual'
+ *  P   : { bms, wbs, asset, hr, an(analysis), ctx, RC(ReportCore) }
+ * ════════════════════════════════════════════════════════════════════════ */
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory();
+  else root.ReportDoc = factory();
+})(typeof self !== "undefined" ? self : this, function () {
+
+  const FONT = "맑은 고딕";
+  // 색상 팔레트 (공공기관 톤: 짙은 남색 + 회색 + 강조)
+  const C = { navy: "1B3A5C", head: "2E5984", line: "BBBBBB", alt: "EEF3F8", gray: "666666", light: "999999",
+    ok: "2E7D32", warn: "B26A00", bad: "C62828", boxbg: "F4F7FB", goldbg: "FFF8E6", gold: "7A5C00" };
+
+  function build(docx, type, P) {
+    const {
+      Document, Paragraph, TextRun, Table, TableRow, TableCell, Header, Footer,
+      AlignmentType, HeadingLevel, BorderStyle, WidthType, ShadingType, LevelFormat,
+      PageBreak, PageNumber, VerticalAlign, TableOfContents,
+    } = docx;
+    const { bms, wbs, asset, hr, an, ctx, RC } = P;
+    const f1 = RC.f1, f2 = RC.f2, PROJECT = RC.PROJECT;
+
+    const TW = 9026; // A4 content width
+    const SH = { CLEAR: ShadingType.CLEAR };
+    const brd = { style: BorderStyle.SINGLE, size: 4, color: C.line };
+    const bo = { top: brd, bottom: brd, left: brd, right: brd };
+    const cm = { top: 50, bottom: 50, left: 90, right: 90 };
+    const shHead = { fill: C.head, type: SH.CLEAR };
+    const shNavy = { fill: C.navy, type: SH.CLEAR };
+    const shAlt = { fill: C.alt, type: SH.CLEAR };
+    const shBox = { fill: C.boxbg, type: SH.CLEAR };
+    const shGold = { fill: C.goldbg, type: SH.CLEAR };
+
+    const rateColor = (v) => v >= 80 ? C.ok : v >= 30 ? C.warn : C.bad;
+    const ch = [];
+
+    // ── 텍스트/문단 헬퍼 ──
+    const run = (t, o = {}) => new TextRun({ text: String(t), font: FONT, size: o.size || 21, bold: o.bold, italics: o.italics, color: o.color, break: o.break });
+    const P_ = (t, o = {}) => new Paragraph({ alignment: o.align, spacing: o.spacing || { before: 20, after: 40 }, indent: o.indent, children: Array.isArray(t) ? t : [run(t, o)] });
+    // 한국 공공문서식 글머리표 위계: □(대) → ○(중) → -(소) → ·(세)
+    const sq = (t, o = {}) => new Paragraph({ spacing: { before: 110, after: 40 }, children: [run("□ ", { bold: true, size: 23, color: C.navy }), run(t, Object.assign({ size: 22, bold: true }, o))] });
+    const ci = (t, o = {}) => new Paragraph({ indent: { left: 320 }, spacing: { before: 24, after: 24 }, children: [run("○ ", { color: C.head, bold: true, size: 21 }), run(t, Object.assign({ size: 21 }, o))] });
+    const dash = (t, o = {}) => new Paragraph({ indent: { left: 660 }, spacing: { before: 14, after: 14 }, children: [run("- ", { color: C.gray, size: 20 }), run(t, Object.assign({ size: 20 }, o))] });
+
+    // ── 표 헬퍼 ──
+    const hc = (t, w, o = {}) => new TableCell({ borders: bo, width: { size: w, type: WidthType.DXA }, shading: o.navy ? shNavy : shHead, margins: cm, verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({ alignment: o.align || AlignmentType.CENTER, children: [run(t, { bold: true, size: 18, color: "FFFFFF" })] })] });
+    const dc = (t, w, o = {}) => new TableCell({ borders: bo, width: { size: w, type: WidthType.DXA }, margins: cm, shading: o.shade ? shAlt : (o.gold ? shGold : undefined), verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({ alignment: o.align || AlignmentType.LEFT, children: [run(t, { size: o.size || 18, bold: o.bold, color: o.color })] })] });
+    const table = (widths, rows) => new Table({ width: { size: TW, type: WidthType.DXA }, columnWidths: widths, rows });
+
+    // 강조 박스 (1x1 표 — 문단 테두리 대신 사용해 OOXML 검증 통과)
+    const box = (children, o = {}) => new Table({ width: { size: TW, type: WidthType.DXA }, columnWidths: [TW], rows: [new TableRow({ children: [new TableCell({ borders: { top: { style: BorderStyle.SINGLE, size: 6, color: o.line || C.head }, left: { style: BorderStyle.SINGLE, size: 6, color: o.line || C.head }, bottom: { style: BorderStyle.SINGLE, size: 6, color: o.line || C.head }, right: { style: BorderStyle.SINGLE, size: 6, color: o.line || C.head } }, shading: o.gold ? shGold : shBox, margins: { top: 100, bottom: 100, left: 160, right: 160 }, children: Array.isArray(children) ? children : [children] })] })] });
+
+    // 섹션 제목 (Ⅰ. ...)
+    const H1 = (t) => new Paragraph({ heading: HeadingLevel.HEADING_1, spacing: { before: 320, after: 140 }, children: [run(t, { size: 26, bold: true, color: C.navy })] });
+    const H2 = (t) => new Paragraph({ heading: HeadingLevel.HEADING_2, spacing: { before: 220, after: 100 }, children: [run(t, { size: 23, bold: true, color: C.head })] });
+    const divider = () => new Paragraph({ border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: C.head } }, spacing: { before: 40, after: 60 }, children: [run("")] });
+
+    // ════════ 표지 ════════
+    ch.push(new Paragraph({ spacing: { before: 200, after: 60 }, alignment: AlignmentType.RIGHT, children: [run(`문서번호 : 제일PMO-${ctx.year}-${String(ctx.month).padStart(2, "0")}호`, { size: 16, color: C.light })] }));
+    ch.push(new Paragraph({ spacing: { before: 1400 }, alignment: AlignmentType.CENTER, children: [run(PROJECT.name, { size: 30, bold: true, color: C.navy })] }));
+    ch.push(new Paragraph({ spacing: { before: 80 }, alignment: AlignmentType.CENTER, children: [run("[ " + PROJECT.brand + " ]", { size: 20, color: C.gray })] }));
+    ch.push(new Paragraph({ spacing: { before: 520 }, alignment: AlignmentType.CENTER, border: { top: { style: BorderStyle.SINGLE, size: 12, color: C.navy }, bottom: { style: BorderStyle.SINGLE, size: 12, color: C.navy } }, children: [new TextRun({ text: ctx.reportTitle, font: FONT, size: 52, bold: true, color: C.navy, break: 1 }), new TextRun({ text: "", break: 1 })] }));
+    ch.push(new Paragraph({ spacing: { before: 200 }, alignment: AlignmentType.CENTER, children: [run("( " + ctx.periodLabel + " )", { size: 26, color: "444444" })] }));
+
+    // 사업 개요 표 (표지)
+    ch.push(new Paragraph({ spacing: { before: 700 } }));
+    const cv = [2400, 6626];
+    ch.push(table(cv, [
+      new TableRow({ children: [hc("사 업 명", cv[0]), dc(PROJECT.name, cv[1], { bold: true })] }),
+      new TableRow({ children: [hc("사업위치", cv[0]), dc(PROJECT.location, cv[1])] }),
+      new TableRow({ children: [hc("사업기간", cv[0]), dc(PROJECT.periodLabel, cv[1])] }),
+      new TableRow({ children: [hc("총사업비", cv[0]), dc(`${f1(PROJECT.totalBudget)}억원 (국비 ${PROJECT.fund.국비.amt}억·시비 ${PROJECT.fund.시비.amt}억·도비 ${PROJECT.fund.도비.amt}억)`, cv[1])] }),
+      new TableRow({ children: [hc("주관기관", cv[0]), dc(`${PROJECT.owner} (${PROJECT.ownerManager})`, cv[1])] }),
+      new TableRow({ children: [hc("수행기관", cv[0]), dc(PROJECT.pmo + " 외 3개 기관", cv[1])] }),
+      new TableRow({ children: [hc("작 성 일", cv[0]), dc(`${ctx.year}. ${ctx.month}. ${ctx.day}.`, cv[1])] }),
+    ]));
+
+    // 결재란
+    ch.push(new Paragraph({ spacing: { before: 600, after: 60 }, alignment: AlignmentType.RIGHT, children: [run("결    재", { size: 18, bold: true, color: C.gray })] }));
+    const ap = [1550, 1550, 1550];
+    const apW = ap[0] + ap[1] + ap[2];
+    const apHeadCell = (t) => new TableCell({ borders: bo, width: { size: ap[0], type: WidthType.DXA }, shading: shHead, margins: cm, verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [run(t, { bold: true, size: 16, color: "FFFFFF" })] })] });
+    const apSignCell = () => new TableCell({ borders: bo, width: { size: ap[0], type: WidthType.DXA }, margins: { top: 360, bottom: 360, left: 90, right: 90 }, verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({ children: [run("")] })] });
+    const apTbl = new Table({ width: { size: apW, type: WidthType.DXA }, alignment: AlignmentType.RIGHT, columnWidths: ap, rows: [
+      new TableRow({ children: [apHeadCell("작성 (PMO)"), apHeadCell("검토 (사업책임)"), apHeadCell("승인 (발주처)")] }),
+      new TableRow({ children: [apSignCell(), apSignCell(), apSignCell()] }),
+    ] });
+    ch.push(apTbl);
+
+    ch.push(new Paragraph({ spacing: { before: 800 }, alignment: AlignmentType.CENTER, children: [run(PROJECT.pmo, { size: 24, bold: true, color: C.navy })] }));
+    ch.push(new Paragraph({ spacing: { before: 40 }, alignment: AlignmentType.CENTER, children: [run("사업관리(PMO)팀", { size: 18, color: C.gray })] }));
+    ch.push(new Paragraph({ children: [new PageBreak()] }));
+
+    // ════════ 목차 ════════
+    ch.push(new Paragraph({ spacing: { after: 160 }, children: [run("목   차", { size: 28, bold: true, color: C.navy })] }));
+    ch.push(divider());
+    const toc = [
+      "Ⅰ. 사업 개요", "Ⅱ. 종합 추진현황 (Executive Summary)", "Ⅲ. 예산 집행 현황",
+      "Ⅳ. 사업 공정(WBS) 추진현황", "Ⅴ. 참여인력 운영 현황", "Ⅵ. 자산 취득·관리 현황",
+      "Ⅶ. 주요 이슈 및 위험관리", "Ⅷ. 향후 추진계획", "Ⅸ. 종합 의견 (PMO)", "붙임. 세부 현황 자료",
+    ];
+    toc.forEach((t) => ch.push(new Paragraph({ spacing: { before: 70, after: 70 }, tabStops: [{ type: "right", position: TW, leader: "dot" }], children: [run(t, { size: 20, bold: t.startsWith("Ⅰ") || false }), new TextRun({ text: "\t", font: FONT }), run("", { size: 18, color: C.light })] })));
+    ch.push(new Paragraph({ children: [new PageBreak()] }));
+
+    // ════════ Ⅰ. 사업 개요 ════════
+    ch.push(H1("Ⅰ. 사업 개요"));
+    ch.push(H2("1. 사업 추진 배경 및 목적"));
+    ch.push(ci("(배경) 인구감소·지역소멸 위기에 대응하기 위한 국토교통부 「강소형 스마트시티 조성사업」 공모 선정 사업"));
+    ch.push(ci(`(목적) ‘${PROJECT.brand}’ 구현을 통한 데이터 기반 도시문제 해결 및 지역경제 활성화, 체류형 관광·디지털 노마드 거점 조성`));
+    ch.push(ci("(범위) 14개 단위사업(네트워크·전자시민증·이노베이션 스퀘어·OASIS SPOT·AI 통합관제 등)을 통한 통합 스마트 서비스 구축·운영"));
+
+    ch.push(H2("2. 사업 기본정보"));
+    const i2 = [2300, 6726];
+    ch.push(table(i2, [
+      new TableRow({ children: [hc("사업유형", i2[0]), dc(PROJECT.type, i2[1])] }),
+      new TableRow({ children: [hc("사업위치", i2[0]), dc(PROJECT.location, i2[1])] }),
+      new TableRow({ children: [hc("사업기간", i2[0]), dc(PROJECT.periodLabel, i2[1])] }),
+      new TableRow({ children: [hc("총사업비", i2[0]), dc(`${f1(PROJECT.totalBudget)}억원`, i2[1])] }),
+      new TableRow({ children: [hc("주관기관", i2[0]), dc(PROJECT.owner, i2[1])] }),
+    ]));
+
+    ch.push(H2("3. 추진체계 및 컨소시엄 구성"));
+    ch.push(ci("아산시(주관·실시기관) — 제일엔지니어링 PMO(직접보조사업자) — 3개 간접보조사업자 협업 체계"));
+    const co = [3300, 2600, 3126];
+    const coRows = [new TableRow({ children: [hc("참여기관", co[0]), hc("역할", co[1]), hc("주요 수행범위", co[2])] })];
+    PROJECT.consortium.forEach((c, i) => coRows.push(new TableRow({ children: [dc(c.org, co[0], { bold: true, shade: i % 2 === 1 }), dc(c.role, co[1], { shade: i % 2 === 1 }), dc(c.scope, co[2], { shade: i % 2 === 1 })] })));
+    ch.push(table(co, coRows));
+
+    ch.push(H2("4. 총사업비 재원 구성"));
+    const fd = [2256, 2256, 2257, 2257];
+    const fdRows = [new TableRow({ children: [hc("재원", fd[0]), hc("부담비율", fd[1]), hc("금액(억원)", fd[2]), hc("비고", fd[3])] })];
+    Object.keys(PROJECT.fund).forEach((k, i) => { const v = PROJECT.fund[k]; fdRows.push(new TableRow({ children: [dc(k, fd[0], { bold: true, align: AlignmentType.CENTER, shade: i % 2 === 1 }), dc(v.rate + "%", fd[1], { align: AlignmentType.CENTER, shade: i % 2 === 1 }), dc(f1(v.amt), fd[2], { align: AlignmentType.RIGHT, shade: i % 2 === 1 }), dc(k === "국비" ? "국토교통부" : k === "도비" ? "충청남도" : "아산시", fd[3], { shade: i % 2 === 1 })] })); });
+    fdRows.push(new TableRow({ children: [dc("합계", fd[0], { bold: true, align: AlignmentType.CENTER, gold: true }), dc("100%", fd[1], { bold: true, align: AlignmentType.CENTER, gold: true }), dc(f1(PROJECT.totalBudget), fd[2], { bold: true, align: AlignmentType.RIGHT, gold: true }), dc("", fd[3], { gold: true })] }));
+    ch.push(table(fd, fdRows));
+    ch.push(new Paragraph({ children: [new PageBreak()] }));
+
+    // ════════ Ⅱ. 종합 추진현황 ════════
+    ch.push(H1("Ⅱ. 종합 추진현황 (Executive Summary)"));
+    // 핵심지표 4종
+    ch.push(H2("1. 핵심 성과지표 (KPI) 요약"));
+    const k = [2256, 2256, 2257, 2257];
+    ch.push(table(k, [
+      new TableRow({ children: [hc("예산 집행률", k[0], { navy: true }), hc("WBS 실적공정률", k[1], { navy: true }), hc("참여인력(활성)", k[2], { navy: true }), hc("취득자산", k[3], { navy: true })] }),
+      new TableRow({ children: [
+        dc(`${f1(bms.execRate)}%`, k[0], { bold: true, align: AlignmentType.CENTER, size: 26, color: rateColor(bms.execRate) }),
+        dc(`${f1(wbs.overall.actualRate)}%`, k[1], { bold: true, align: AlignmentType.CENTER, size: 26, color: rateColor(wbs.overall.actualRate) }),
+        dc(`${hr.active} / ${hr.total}명`, k[2], { bold: true, align: AlignmentType.CENTER, size: 26, color: C.navy }),
+        dc(`${asset.total}점`, k[3], { bold: true, align: AlignmentType.CENTER, size: 26, color: C.navy }),
+      ] }),
+      new TableRow({ children: [
+        dc(`${f1(bms.totalExec)}억 / ${f1(bms.totalBudget)}억`, k[0], { align: AlignmentType.CENTER, size: 15, color: C.gray }),
+        dc(`달성률 ${f1(wbs.overall.achieveRate)}% · 지연 ${wbs.overall.delayed}건`, k[1], { align: AlignmentType.CENTER, size: 15, color: C.gray }),
+        dc(`가동률 ${f1(hr.rate)}%`, k[2], { align: AlignmentType.CENTER, size: 15, color: C.gray }),
+        dc(`취득가액 ${f1(asset.value)}억`, k[3], { align: AlignmentType.CENTER, size: 15, color: C.gray }),
+      ] }),
+    ]));
+    // 기간/진척
+    ch.push(new Paragraph({ spacing: { before: 120 } }));
+    const g = [3008, 3009, 3009];
+    ch.push(table(g, [
+      new TableRow({ children: [hc("기간 소진율", g[0]), hc("준공까지", g[1]), hc("집행률 vs 기간 격차", g[2])] }),
+      new TableRow({ children: [
+        dc(`${f1(ctx.timePct)}%`, g[0], { bold: true, align: AlignmentType.CENTER, color: C.navy }),
+        dc(`D-${ctx.dday}일 (약 ${ctx.monthsLeft}개월)`, g[1], { bold: true, align: AlignmentType.CENTER, color: C.navy }),
+        dc(`${an.gap > 0 ? "▼" : "▲"} ${f1(Math.abs(an.gap))}%p ${an.gap > 0 ? "집행 가속 필요" : "양호"}`, g[2], { bold: true, align: AlignmentType.CENTER, color: an.gap > 8 ? C.bad : an.gap > 0 ? C.warn : C.ok }),
+      ] }),
+    ]));
+
+    ch.push(H2("2. 보고 개요 (종합 요약)"));
+    const ovParas = [];
+    an.overview.forEach((o) => {
+      ovParas.push(new Paragraph({ spacing: { before: 50, after: 24 }, children: [run("□ ", { bold: true, size: 22, color: C.navy }), run(o.t, { size: 21, bold: true })] }));
+      (o.subs || []).forEach((s) => ovParas.push(new Paragraph({ indent: { left: 340 }, spacing: { before: 14, after: 14 }, children: [run("○ ", { color: C.head, bold: true, size: 20 }), run(s, { size: 20 })] })));
+    });
+    ch.push(box(ovParas));
+
+    ch.push(H2("3. 주요 추진성과"));
+    an.achievements.forEach((a) => ch.push(ci(a)));
+    ch.push(new Paragraph({ children: [new PageBreak()] }));
+
+    // ════════ Ⅲ. 예산 집행 현황 ════════
+    ch.push(H1("Ⅲ. 예산 집행 현황"));
+    ch.push(new Paragraph({ spacing: { after: 60 }, children: [run("※ ", { color: C.head, bold: true }), run("예산집행관리시스템(BMS) 실시간 연동 / 단위: 억원", { size: 16, color: C.gray })] }));
+    an.budgetPoints.forEach((t) => ch.push(ci(t)));
+
+    ch.push(H2("1. 재원별 집행 현황"));
+    const sc = [2256, 1500, 2013, 2013, 1244];
+    const scRows = [new TableRow({ children: [hc("재원", sc[0]), hc("비율", sc[1]), hc("예산", sc[2]), hc("집행(추정)", sc[3]), hc("집행률", sc[4])] })];
+    bms.sources.forEach((s, i) => scRows.push(new TableRow({ children: [dc(s.name, sc[0], { bold: true, align: AlignmentType.CENTER, shade: i % 2 === 1 }), dc(s.rate + "%", sc[1], { align: AlignmentType.CENTER, shade: i % 2 === 1 }), dc(f1(s.budget), sc[2], { align: AlignmentType.RIGHT, shade: i % 2 === 1 }), dc(f1(s.exec), sc[3], { align: AlignmentType.RIGHT, shade: i % 2 === 1 }), dc(f1(bms.execRate) + "%", sc[4], { align: AlignmentType.CENTER, shade: i % 2 === 1 })] })));
+    scRows.push(new TableRow({ children: [dc("합계", sc[0], { bold: true, align: AlignmentType.CENTER, gold: true }), dc("100%", sc[1], { bold: true, align: AlignmentType.CENTER, gold: true }), dc(f1(bms.totalBudget), sc[2], { bold: true, align: AlignmentType.RIGHT, gold: true }), dc(f1(bms.totalExec), sc[3], { bold: true, align: AlignmentType.RIGHT, gold: true }), dc(f1(bms.execRate) + "%", sc[4], { bold: true, align: AlignmentType.CENTER, gold: true })] }));
+    ch.push(table(sc, scRows));
+    ch.push(new Paragraph({ spacing: { before: 30 }, children: [run("※ 재원별 집행액은 전체 집행률 기준 안분 추정치이며, 실제 정산은 e나라도움(국비)·보탬e/시 회계(시비) 기준에 따름", { size: 14, color: C.light })] }));
+
+    ch.push(H2("2. 비목별 집행 현황"));
+    const bc = [2426, 1500, 1500, 1500, 1100, 1000];
+    const bcRows = [new TableRow({ children: [hc("비목", bc[0]), hc("예산", bc[1]), hc("집행", bc[2]), hc("잔액", bc[3]), hc("집행률", bc[4]), hc("항목수", bc[5])] })];
+    bms.cats.forEach((c, i) => bcRows.push(new TableRow({ children: [dc(c.name, bc[0], { bold: true, shade: i % 2 === 1 }), dc(f1(c.budget), bc[1], { align: AlignmentType.RIGHT, shade: i % 2 === 1 }), dc(f2(c.exec), bc[2], { align: AlignmentType.RIGHT, shade: i % 2 === 1 }), dc(f1(c.remain), bc[3], { align: AlignmentType.RIGHT, shade: i % 2 === 1 }), dc(f1(c.rate) + "%", bc[4], { align: AlignmentType.CENTER, bold: true, color: rateColor(c.rate), shade: i % 2 === 1 }), dc(c.cnt || "-", bc[5], { align: AlignmentType.CENTER, shade: i % 2 === 1 })] })));
+    bcRows.push(new TableRow({ children: [dc("합계", bc[0], { bold: true, gold: true }), dc(f1(bms.totalBudget), bc[1], { align: AlignmentType.RIGHT, bold: true, gold: true }), dc(f1(bms.totalExec), bc[2], { align: AlignmentType.RIGHT, bold: true, gold: true }), dc(f1(bms.totalRemain), bc[3], { align: AlignmentType.RIGHT, bold: true, gold: true }), dc(f1(bms.execRate) + "%", bc[4], { align: AlignmentType.CENTER, bold: true, gold: true }), dc(bms.itemCount, bc[5], { align: AlignmentType.CENTER, bold: true, gold: true })] }));
+    ch.push(table(bc, bcRows));
+
+    ch.push(H2("3. 단위사업별 집행 현황"));
+    const uc = [600, 3326, 1450, 1450, 1100, 1100];
+    const ucRows = [new TableRow({ children: [hc("No", uc[0]), hc("단위사업", uc[1]), hc("예산", uc[2]), hc("집행", uc[3]), hc("집행률", uc[4]), hc("상태", uc[5])] })];
+    bms.projects.forEach((p, i) => { const st = p.rate >= 90 ? "집행완료" : p.rate > 0 ? "진행중" : "미착수"; ucRows.push(new TableRow({ children: [dc(p.num, uc[0], { align: AlignmentType.CENTER, shade: i % 2 === 1 }), dc(p.name, uc[1], { bold: true, shade: i % 2 === 1 }), dc(f2(p.budget), uc[2], { align: AlignmentType.RIGHT, shade: i % 2 === 1 }), dc(f2(p.exec), uc[3], { align: AlignmentType.RIGHT, shade: i % 2 === 1 }), dc(f1(p.rate) + "%", uc[4], { align: AlignmentType.CENTER, bold: true, color: rateColor(p.rate), shade: i % 2 === 1 }), dc(st, uc[5], { align: AlignmentType.CENTER, color: st === "미착수" ? C.bad : st === "집행완료" ? C.ok : C.warn, shade: i % 2 === 1 })] })); });
+    if (bms.commonB > 0) ucRows.push(new TableRow({ children: [dc("공통", uc[0], { align: AlignmentType.CENTER, shade: true }), dc("공통비(인건비·운영비·감리 등)", uc[1], { bold: true, shade: true }), dc(f2(bms.commonB), uc[2], { align: AlignmentType.RIGHT, shade: true }), dc(f2(bms.commonE), uc[3], { align: AlignmentType.RIGHT, shade: true }), dc(f1(bms.commonB ? bms.commonE / bms.commonB * 100 : 0) + "%", uc[4], { align: AlignmentType.CENTER, shade: true }), dc("-", uc[5], { align: AlignmentType.CENTER, shade: true })] }));
+    ch.push(table(uc, ucRows));
+    ch.push(new Paragraph({ children: [new PageBreak()] }));
+
+    // ════════ Ⅳ. WBS 공정 ════════
+    ch.push(H1("Ⅳ. 사업 공정(WBS) 추진현황"));
+    ch.push(new Paragraph({ spacing: { after: 60 }, children: [run("※ ", { color: C.head, bold: true }), run("WBS 관리시스템(총괄표 공정률 + 작업건수) 실시간 연동", { size: 16, color: C.gray })] }));
+    an.wbsPoints.forEach((t) => ch.push(ci(t)));
+
+    ch.push(H2("1. 공정 종합 현황"));
+    const wo = [1504, 1504, 1505, 1505, 1504, 1504];
+    ch.push(table(wo, [
+      new TableRow({ children: [hc("전체", wo[0]), hc("완료", wo[1]), hc("진행중", wo[2]), hc("지연", wo[3]), hc("대기", wo[4]), hc("달성률", wo[5])] }),
+      new TableRow({ children: [
+        dc(wbs.overall.total + "건", wo[0], { align: AlignmentType.CENTER, bold: true }),
+        dc(wbs.overall.done + "건", wo[1], { align: AlignmentType.CENTER, bold: true, color: C.ok }),
+        dc(wbs.overall.inProg + "건", wo[2], { align: AlignmentType.CENTER, bold: true, color: C.head }),
+        dc(wbs.overall.delayed + "건", wo[3], { align: AlignmentType.CENTER, bold: true, color: C.bad }),
+        dc(wbs.overall.waiting + "건", wo[4], { align: AlignmentType.CENTER, color: C.gray }),
+        dc(f1(wbs.overall.achieveRate) + "%", wo[5], { align: AlignmentType.CENTER, bold: true, color: C.navy }),
+      ] }),
+    ]));
+    ch.push(new Paragraph({ spacing: { before: 30 }, children: [run(`계획공정률 ${f1(wbs.overall.plannedRate)}% · 실적공정률 ${f1(wbs.overall.actualRate)}% · 편차 ${f1(wbs.overall.deviation)}%p`, { size: 16, color: C.gray })] }));
+
+    if (wbs.byCat.length) {
+      ch.push(H2("2. 대분류별 공정 현황"));
+      const cc = [2626, 900, 900, 900, 1200, 1200, 1300];
+      const ccRows = [new TableRow({ children: [hc("대분류", cc[0]), hc("건수", cc[1]), hc("완료", cc[2]), hc("지연", cc[3]), hc("계획률", cc[4]), hc("실적률", cc[5]), hc("편차", cc[6])] })];
+      wbs.byCat.forEach((c, i) => ccRows.push(new TableRow({ children: [dc(c.name, cc[0], { bold: true, shade: i % 2 === 1 }), dc(c.total, cc[1], { align: AlignmentType.CENTER, shade: i % 2 === 1 }), dc(c.done, cc[2], { align: AlignmentType.CENTER, color: C.ok, shade: i % 2 === 1 }), dc(c.delayed, cc[3], { align: AlignmentType.CENTER, color: c.delayed > 0 ? C.bad : C.gray, shade: i % 2 === 1 }), dc(f1(c.plannedRate) + "%", cc[4], { align: AlignmentType.CENTER, shade: i % 2 === 1 }), dc(f1(c.actualRate) + "%", cc[5], { align: AlignmentType.CENTER, bold: true, color: rateColor(c.actualRate), shade: i % 2 === 1 }), dc((c.deviation > 0 ? "+" : "") + f1(c.deviation), cc[6], { align: AlignmentType.CENTER, color: c.deviation < 0 ? C.bad : C.ok, shade: i % 2 === 1 })] })));
+      ch.push(table(cc, ccRows));
+    }
+
+    if (wbs.lvl1.length) {
+      ch.push(H2("3. 주요 공정(Level-1) 추진현황"));
+      const lc = [800, 3326, 1700, 1100, 1100, 1000];
+      const lcRows = [new TableRow({ children: [hc("WBS", lc[0]), hc("공정명", lc[1]), hc("담당", lc[2]), hc("계획", lc[3]), hc("실적", lc[4]), hc("상태", lc[5])] })];
+      wbs.lvl1.slice(0, 14).forEach((r, i) => lcRows.push(new TableRow({ children: [dc(r.wbsId, lc[0], { align: AlignmentType.CENTER, shade: i % 2 === 1 }), dc(r.name, lc[1], { size: 15, shade: i % 2 === 1 }), dc(r.org || "-", lc[2], { size: 15, shade: i % 2 === 1 }), dc(f1(r.planned) + "%", lc[3], { align: AlignmentType.CENTER, size: 15, shade: i % 2 === 1 }), dc(f1(r.actual) + "%", lc[4], { align: AlignmentType.CENTER, bold: true, size: 15, color: rateColor(r.actual), shade: i % 2 === 1 }), dc(r.status, lc[5], { align: AlignmentType.CENTER, size: 15, color: r.status === "지연" ? C.bad : r.status === "완료" ? C.ok : C.warn, shade: i % 2 === 1 })] })));
+      ch.push(table(lc, lcRows));
+    }
+    ch.push(new Paragraph({ children: [new PageBreak()] }));
+
+    // ════════ Ⅴ. 인력 ════════
+    ch.push(H1("Ⅴ. 참여인력 운영 현황"));
+    ch.push(new Paragraph({ spacing: { after: 60 }, children: [run("※ ", { color: C.head, bold: true }), run("인력관리 포털(Notion 연동) 기준 / 4개 기관 컨소시엄", { size: 16, color: C.gray })] }));
+    an.hrPoints.forEach((t) => ch.push(ci(t)));
+
+    ch.push(H2("1. 인력 운영 총괄"));
+    const ho = [3008, 3009, 3009];
+    ch.push(table(ho, [
+      new TableRow({ children: [hc("총 등록인력", ho[0]), hc("현재 활성", ho[1]), hc("투입 종료", ho[2])] }),
+      new TableRow({ children: [
+        dc(hr.total + "명", ho[0], { align: AlignmentType.CENTER, bold: true, size: 24, color: C.navy }),
+        dc(hr.active + "명", ho[1], { align: AlignmentType.CENTER, bold: true, size: 24, color: C.ok }),
+        dc(hr.ended + "명", ho[2], { align: AlignmentType.CENTER, bold: true, size: 24, color: C.gray }),
+      ] }),
+      new TableRow({ children: [dc("4개 기관", ho[0], { align: AlignmentType.CENTER, size: 14, color: C.gray }), dc("가동률 " + f1(hr.rate) + "%", ho[1], { align: AlignmentType.CENTER, size: 14, color: C.gray }), dc("단계별 투입 종료", ho[2], { align: AlignmentType.CENTER, size: 14, color: C.gray })] }),
+    ]));
+
+    if (hr.orgs && hr.orgs.length) {
+      ch.push(H2("2. 기관별 참여인력 현황"));
+      const oc = [3626, 1350, 1350, 1350, 1350];
+      const ocRows = [new TableRow({ children: [hc("참여기관", oc[0]), hc("총원", oc[1]), hc("활성", oc[2]), hc("종료", oc[3]), hc("가동률", oc[4])] })];
+      hr.orgs.forEach((o, i) => ocRows.push(new TableRow({ children: [dc(o.org, oc[0], { bold: true, size: 16, shade: i % 2 === 1 }), dc(o.total + "명", oc[1], { align: AlignmentType.CENTER, shade: i % 2 === 1 }), dc(o.active + "명", oc[2], { align: AlignmentType.CENTER, color: C.ok, shade: i % 2 === 1 }), dc(o.ended + "명", oc[3], { align: AlignmentType.CENTER, color: C.gray, shade: i % 2 === 1 }), dc(f1(o.rate) + "%", oc[4], { align: AlignmentType.CENTER, bold: true, shade: i % 2 === 1 })] })));
+      ocRows.push(new TableRow({ children: [dc("합계", oc[0], { bold: true, gold: true }), dc(hr.total + "명", oc[1], { align: AlignmentType.CENTER, bold: true, gold: true }), dc(hr.active + "명", oc[2], { align: AlignmentType.CENTER, bold: true, gold: true }), dc(hr.ended + "명", oc[3], { align: AlignmentType.CENTER, bold: true, gold: true }), dc(f1(hr.rate) + "%", oc[4], { align: AlignmentType.CENTER, bold: true, gold: true })] }));
+      ch.push(table(oc, ocRows));
+      ch.push(new Paragraph({ spacing: { before: 30 }, children: [run("※ 인건비는 실투입단가(실지급액 × 참여기간 × 참여율) 기준 정산하며, 기관별 투입 종료에 따라 활성 인력이 변동됨", { size: 14, color: C.light })] }));
+    }
+    ch.push(new Paragraph({ children: [new PageBreak()] }));
+
+    // ════════ Ⅵ. 자산 ════════
+    ch.push(H1("Ⅵ. 자산 취득·관리 현황"));
+    ch.push(new Paragraph({ spacing: { after: 60 }, children: [run("※ ", { color: C.head, bold: true }), run(`자산관리 마스터(Notion 연동) 기준${asset.syncedAt ? " · " + asset.syncedAt : ""}`, { size: 16, color: C.gray })] }));
+    an.assetPoints.forEach((t) => ch.push(ci(t)));
+
+    ch.push(H2("1. 자산 총괄"));
+    const ao = [2256, 2256, 2257, 2257];
+    ch.push(table(ao, [
+      new TableRow({ children: [hc("총 자산", ao[0]), hc("취득가액", ao[1]), hc("사용중", ao[2]), hc("대장 등재율", ao[3])] }),
+      new TableRow({ children: [
+        dc(asset.total + "점", ao[0], { align: AlignmentType.CENTER, bold: true, size: 22, color: C.navy }),
+        dc(f1(asset.value) + "억원", ao[1], { align: AlignmentType.CENTER, bold: true, size: 22, color: C.navy }),
+        dc(asset.inUse + "점", ao[2], { align: AlignmentType.CENTER, bold: true, size: 22, color: C.ok }),
+        dc(f1(asset.issuedRate) + "%", ao[3], { align: AlignmentType.CENTER, bold: true, size: 22, color: C.ok }),
+      ] }),
+    ]));
+
+    if (asset.byCat.length) {
+      ch.push(H2("2. 자산 분류별 현황"));
+      const ac = [3026, 1600, 2400, 2000];
+      const acRows = [new TableRow({ children: [hc("자산분류", ac[0]), hc("수량", ac[1]), hc("취득가액(억원)", ac[2]), hc("구성비", ac[3])] })];
+      const totV = asset.byCat.reduce((a, c) => a + c.value, 0) || 1;
+      asset.byCat.forEach((c, i) => acRows.push(new TableRow({ children: [dc(c.name, ac[0], { bold: true, shade: i % 2 === 1 }), dc(c.count + "점", ac[1], { align: AlignmentType.CENTER, shade: i % 2 === 1 }), dc(f2(c.value), ac[2], { align: AlignmentType.RIGHT, shade: i % 2 === 1 }), dc(f1(c.value / totV * 100) + "%", ac[3], { align: AlignmentType.CENTER, shade: i % 2 === 1 })] })));
+      acRows.push(new TableRow({ children: [dc("합계", ac[0], { bold: true, gold: true }), dc(asset.total + "점", ac[1], { align: AlignmentType.CENTER, bold: true, gold: true }), dc(f1(asset.value), ac[2], { align: AlignmentType.RIGHT, bold: true, gold: true }), dc("100%", ac[3], { align: AlignmentType.CENTER, bold: true, gold: true })] }));
+      ch.push(table(ac, acRows));
+    }
+
+    if (asset.byLoc.length) {
+      ch.push(H2("3. 설치 위치별 / 관리담당자별 현황"));
+      const half = Math.max(asset.byLoc.length, asset.byMgr.length);
+      const pc = [2256, 1400, 700, 2256, 1414];
+      const pcRows = [new TableRow({ children: [hc("설치위치", pc[0]), hc("수량", pc[1]), hc("", pc[2], { navy: true }), hc("관리담당자", pc[3]), hc("수량", pc[4])] })];
+      for (let i = 0; i < half; i++) {
+        const l = asset.byLoc[i], mgr = asset.byMgr[i];
+        pcRows.push(new TableRow({ children: [
+          dc(l ? l.name : "", pc[0], { shade: i % 2 === 1 }), dc(l ? l.count + "점" : "", pc[1], { align: AlignmentType.CENTER, shade: i % 2 === 1 }),
+          dc("", pc[2], { shade: i % 2 === 1 }),
+          dc(mgr ? mgr.name : "", pc[3], { shade: i % 2 === 1 }), dc(mgr ? mgr.count + "점" : "", pc[4], { align: AlignmentType.CENTER, shade: i % 2 === 1 }),
+        ] }));
+      }
+      ch.push(table(pc, pcRows));
+    }
+    ch.push(new Paragraph({ children: [new PageBreak()] }));
+
+    // ════════ Ⅶ. 이슈/리스크 ════════
+    ch.push(H1("Ⅶ. 주요 이슈 및 위험관리"));
+    const ic = [900, 2700, 2400, 2026, 1000];
+    const icRows = [new TableRow({ children: [hc("등급", ic[0]), hc("이슈 / 현안", ic[1]), hc("영향", ic[2]), hc("대응 조치", ic[3]), hc("상태", ic[4])] })];
+    an.issues.forEach((it, i) => { const gc = it.grade === "Critical" ? C.bad : it.grade === "High" ? C.warn : C.head; icRows.push(new TableRow({ children: [dc(it.grade, ic[0], { align: AlignmentType.CENTER, bold: true, size: 15, color: gc, shade: i % 2 === 1 }), dc(it.issue, ic[1], { size: 15, shade: i % 2 === 1 }), dc(it.impact, ic[2], { size: 15, shade: i % 2 === 1 }), dc(it.action, ic[3], { size: 15, shade: i % 2 === 1 }), dc("관리중", ic[4], { align: AlignmentType.CENTER, size: 15, shade: i % 2 === 1 })] })); });
+    ch.push(table(ic, icRows));
+
+    // ════════ Ⅷ. 향후 계획 ════════
+    ch.push(H1("Ⅷ. 향후 추진계획"));
+    const nm = ctx.month === 12 ? 1 : ctx.month + 1;
+    const plans = [
+      { cat: "예산", task: `잔여 ${f1(bms.totalRemain)}억원 적기 집행 — 월평균 ${f1(an.monthlyNeed)}억원 집행 목표 관리`, when: `${nm}월~`, who: "PMO·정산" },
+      { cat: "발주", task: an.zero.length ? `미착수 ${an.zero.length}개 단위사업(${an.zero.slice(0, 2).map((p) => p.name).join(", ")} 등) 발주 추진` : "잔여 사업 계약·검수 일정 관리", when: `${nm}월`, who: "PMO·구매" },
+      { cat: "공정", task: `WBS 지연 ${wbs.overall.delayed}건 만회계획 이행 및 마일스톤 재정렬`, when: "상시", who: "PMO" },
+      { cat: "품질", task: "완료 단위사업 검수·산출물 확정 및 통합시험·시범운영 준비", when: `${nm}월~`, who: "PMO·수행기관" },
+      { cat: "정산", task: "인건비·자산취득 증빙 정비 및 e나라도움/보탬e 연계 점검(감사 대비)", when: "상시", who: "정산" },
+      { cat: "관리", task: "상위기관(국토부·충남도) 보고서 제출 및 운영 조례·계획 수립", when: `${nm}월 초`, who: "PMO·아산시" },
+    ];
+    const pc2 = [1100, 4626, 1800, 1500];
+    const pc2Rows = [new TableRow({ children: [hc("구분", pc2[0]), hc("추진 과제", pc2[1]), hc("일정", pc2[2]), hc("담당", pc2[3])] })];
+    plans.forEach((p, i) => pc2Rows.push(new TableRow({ children: [dc(p.cat, pc2[0], { align: AlignmentType.CENTER, bold: true, shade: i % 2 === 1 }), dc(p.task, pc2[1], { size: 16, shade: i % 2 === 1 }), dc(p.when, pc2[2], { align: AlignmentType.CENTER, size: 16, shade: i % 2 === 1 }), dc(p.who, pc2[3], { align: AlignmentType.CENTER, size: 16, shade: i % 2 === 1 })] })));
+    ch.push(table(pc2, pc2Rows));
+
+    // ════════ Ⅸ. 종합 의견 ════════
+    ch.push(H1("Ⅸ. 종합 의견 (PMO)"));
+    an.recos.forEach((r, i) => ch.push(new Paragraph({ spacing: { before: 60, after: 60 }, indent: { left: 280 }, children: [run(`${i + 1}. `, { bold: true, color: C.head }), run(r, { size: 19 })] })));
+    ch.push(new Paragraph({ spacing: { before: 200 } }));
+    ch.push(box(new Paragraph({ children: [run("종합 판단: ", { bold: true, color: C.gold }), run(an.judgment, { size: 19 })] }), { gold: true, line: C.gold }));
+    ch.push(new Paragraph({ children: [new PageBreak()] }));
+
+    // ════════ 붙임 ════════
+    ch.push(H1("붙임. 세부 현황 자료"));
+    ch.push(H2("붙임 1. WBS 지연 작업 목록"));
+    if (wbs.delayed.length) {
+      const dc2 = [800, 3526, 1500, 900, 900, 1400];
+      const dc2Rows = [new TableRow({ children: [hc("WBS", dc2[0]), hc("작업명", dc2[1]), hc("담당", dc2[2]), hc("계획", dc2[3]), hc("실적", dc2[4]), hc("완료예정", dc2[5])] })];
+      wbs.delayed.slice(0, 20).forEach((r, i) => dc2Rows.push(new TableRow({ children: [dc(r.wbsId, dc2[0], { align: AlignmentType.CENTER, size: 14, shade: i % 2 === 1 }), dc(r.name, dc2[1], { size: 14, shade: i % 2 === 1 }), dc(r.org || "-", dc2[2], { size: 14, shade: i % 2 === 1 }), dc(f1(r.planned) + "%", dc2[3], { align: AlignmentType.CENTER, size: 14, shade: i % 2 === 1 }), dc(f1(r.actual) + "%", dc2[4], { align: AlignmentType.CENTER, size: 14, color: C.bad, shade: i % 2 === 1 }), dc(r.endDate || "-", dc2[5], { align: AlignmentType.CENTER, size: 14, shade: i % 2 === 1 })] })));
+      ch.push(table(dc2, dc2Rows));
+    } else ch.push(ci("현재 지연 작업 없음"));
+
+    ch.push(H2("붙임 2. 미착수 단위사업 목록"));
+    if (an.zero.length) {
+      const zc = [700, 4626, 1850, 1850];
+      const zcRows = [new TableRow({ children: [hc("No", zc[0]), hc("단위사업", zc[1]), hc("예산(억원)", zc[2]), hc("조치", zc[3])] })];
+      an.zero.forEach((p, i) => zcRows.push(new TableRow({ children: [dc(p.num, zc[0], { align: AlignmentType.CENTER, shade: i % 2 === 1 }), dc(p.name, zc[1], { bold: true, shade: i % 2 === 1 }), dc(f2(p.budget), zc[2], { align: AlignmentType.RIGHT, shade: i % 2 === 1 }), dc("발주계획 수립", zc[3], { align: AlignmentType.CENTER, size: 15, shade: i % 2 === 1 })] })));
+      ch.push(table(zc, zcRows));
+    } else ch.push(ci("미착수(예산 3억 이상) 단위사업 없음"));
+
+    ch.push(new Paragraph({ spacing: { before: 400 }, alignment: AlignmentType.CENTER, children: [run("— 이 상 —", { size: 20, bold: true, color: C.gray })] }));
+    ch.push(new Paragraph({ spacing: { before: 200 }, alignment: AlignmentType.CENTER, children: [run(`본 보고서는 BMS·WBS·자산관리·인력관리 시스템의 실시간 데이터를 기반으로 자동 생성되었습니다. (생성: ${ctx.year}.${ctx.month}.${ctx.day})`, { size: 14, color: C.light })] }));
+
+    // ════════ 문서 조립 ════════
+    return new Document({
+      creator: "제일엔지니어링 PMO", title: ctx.reportTitle, description: PROJECT.name,
+      styles: {
+        default: { document: { run: { font: FONT, size: 19 } } },
+        paragraphStyles: [
+          { id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", quickFormat: true, run: { size: 26, bold: true, font: FONT, color: C.navy }, paragraph: { spacing: { before: 320, after: 140 }, outlineLevel: 0, border: { bottom: { style: BorderStyle.SINGLE, size: 10, color: C.navy } } } },
+          { id: "Heading2", name: "Heading 2", basedOn: "Normal", next: "Normal", quickFormat: true, run: { size: 21, bold: true, font: FONT, color: C.head }, paragraph: { spacing: { before: 200, after: 90 }, outlineLevel: 1 } },
+        ],
+      },
+      sections: [{
+        properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 1300, right: 1100, bottom: 1200, left: 1100 } } },
+        headers: { default: new Header({ children: [new Paragraph({ alignment: AlignmentType.RIGHT, border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: C.line } }, children: [run(`${PROJECT.name}  |  ${ctx.reportTitle}`, { size: 14, color: C.light })] })] }) },
+        footers: { default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER, border: { top: { style: BorderStyle.SINGLE, size: 4, color: C.line } }, children: [run("제일엔지니어링 PMO  ·  ", { size: 14, color: C.light }), new TextRun({ children: [PageNumber.CURRENT], font: FONT, size: 14, color: C.light }), run(" / ", { size: 14, color: C.light }), new TextRun({ children: [PageNumber.TOTAL_PAGES], font: FONT, size: 14, color: C.light })] })] }) },
+        children: ch,
+      }],
+    });
+  }
+
+  return { build };
+});
+
+/* ════════════════════════════════════════════════════════════════════════
+ *  프런트엔드 컨트롤러 — 5개 소스 수집 → 분석 → DOCX 생성·다운로드
+ * ════════════════════════════════════════════════════════════════════════ */
+const SRC = {
+  bms:   "https://leesungho-ai.github.io/Asan-Smart-City-Budget-Management-System-BMS-/data/budget.json",
+  wbsSum:"https://leesungho-ai.github.io/Asan-Smartcity-WBS/data/summary-data.json",
+  wbsDat:"https://leesungho-ai.github.io/Asan-Smartcity-WBS/data/wbs-data.json",
+  asset: "https://leesungho-ai.github.io/Asan-asset-management/data/assets.json",
+  hr:    "https://leesungho-ai.github.io/Asan-HR-Management-Portal/index.html",
+};
+const TITLES = { weekly:"주간 진도 보고서", monthly:"월간 추진현황 보고", quarter:"분기 추진실적 보고", annual:"연간 성과보고서" };
+const FILE   = { weekly:"주간진도보고서", monthly:"월간추진현황보고", quarter:"분기추진실적보고", annual:"연간성과보고서" };
+const S = { raw:{}, proc:null, busy:false };
+
+function log(t,m){const e=document.getElementById('sl');e.classList.add('show');const c={ok:'ok',warn:'warn',err:'err',info:'info'}[t]||'';e.innerHTML+=`<div class="${c}">${new Date().toLocaleTimeString('ko-KR')} ${m}</div>`;e.scrollTop=e.scrollHeight}
+function srcState(id,state,txt){const el=document.getElementById('src-'+id);if(!el)return;el.className='src '+state;el.querySelector('.st').textContent=txt}
+
+async function fetchJSON(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.json()}
+async function fetchText(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.text()}
+
+async function loadAll(){
+  log('info','📦 5개 데이터 소스 수집 시작...');
+  document.getElementById('dataStatus').textContent='● 수집 중';
+  const tasks = [
+    ['bms',   fetchJSON(SRC.bms),   'bms'],
+    ['wbsSum',fetchJSON(SRC.wbsSum),'wbs'],
+    ['wbsDat',fetchJSON(SRC.wbsDat),'wbs'],
+    ['asset', fetchJSON(SRC.asset), 'asset'],
+    ['hr',    fetchText(SRC.hr),    'hr'],
+  ];
+  await Promise.all(tasks.map(async ([key,p,sid])=>{
+    try{ S.raw[key]=await p; srcState(sid,'ok','연결됨'); }
+    catch(e){ srcState(sid,'err','실패'); log('warn',`⚠️ ${key} 로드 실패 (${e.message})`); }
+  }));
+  try{
+    const RC=window.ReportCore;
+    S.proc={
+      bms:   RC.processBMS(S.raw.bms),
+      wbs:   RC.processWBS(S.raw.wbsSum, S.raw.wbsDat),
+      asset: RC.processAsset(S.raw.asset),
+      hr:    RC.processHR(S.raw.hr),
+    };
+    updateKPI();
+    document.getElementById('dataStatus').textContent='● 실시간 연동';
+    document.getElementById('lastUpdate').textContent=new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}).slice(0,16);
+    log('ok',`✅ 데이터 처리 완료 — 집행률 ${S.proc.bms.execRate}% · 공정 ${S.proc.wbs.overall.actualRate}% · 인력 ${S.proc.hr.active}/${S.proc.hr.total}명 · 자산 ${S.proc.asset.total}점`);
+  }catch(e){ document.getElementById('dataStatus').textContent='⚠️ 처리 오류'; log('err','❌ 데이터 처리 실패: '+e.message); console.error(e); }
+}
+
+function updateKPI(){
+  const RC=window.ReportCore, p=S.proc; if(!p)return;
+  const PE=RC.PROJECT.endDate, PS=RC.PROJECT.startDate, n=new Date();
+  const dd=Math.ceil((PE-n)/864e5), el=Math.ceil((n-PS)/864e5), tt=Math.ceil((PE-PS)/864e5), tp=(el/tt*100).toFixed(1);
+  document.getElementById('k1').textContent=RC.f1(p.bms.execRate)+'%';
+  document.getElementById('k1s').textContent=`${RC.f1(p.bms.totalExec)}억 / ${RC.f1(p.bms.totalBudget)}억`;
+  document.getElementById('k2').textContent=RC.f1(p.wbs.overall.actualRate)+'%';
+  document.getElementById('k2s').textContent=`완료 ${p.wbs.overall.done}/${p.wbs.overall.total}건 · 지연 ${p.wbs.overall.delayed}`;
+  document.getElementById('k5').textContent=`${p.hr.active}/${p.hr.total}명`;
+  document.getElementById('k5s').textContent=`4개 기관 · 가동률 ${RC.f1(p.hr.rate)}%`;
+  document.getElementById('k6').textContent=p.asset.total+'점';
+  document.getElementById('k6s').textContent=`취득가액 ${RC.f1(p.asset.value)}억`;
+  document.getElementById('k4').textContent='D-'+dd;
+  document.getElementById('k4s').textContent=`기간소진 ${tp}%`;
+}
+
+function buildCtx(type){
+  const RC=window.ReportCore;
+  const n=new Date(), kst=new Date(n.getTime()+9*3600000);
+  const dd=Math.ceil((RC.PROJECT.endDate-n)/864e5);
+  const el=Math.ceil((n-RC.PROJECT.startDate)/864e5);
+  const tt=Math.ceil((RC.PROJECT.endDate-RC.PROJECT.startDate)/864e5);
+  const y=kst.getFullYear(), m=kst.getMonth()+1, q=Math.ceil(m/3);
+  let period;
+  if(type==='weekly'){const w=Math.ceil((kst-new Date(kst.getFullYear(),0,1))/6048e5);period=`${y}년 제${w}주`;}
+  else if(type==='monthly')period=`${y}년 ${m}월`;
+  else if(type==='quarter')period=`${y}년 ${q}분기`;
+  else period=`${y}년`;
+  return { year:y, month:m, day:kst.getDate(), dday:dd, monthsLeft:Math.max(1,Math.round(dd/30)), timePct:(el/tt*100), reportTitle:TITLES[type], periodLabel:period };
+}
+
+async function gen(card){
+  if(typeof docx==='undefined'){log('err','❌ docx 라이브러리 로딩 중 — 잠시 후 다시 시도해주세요');return;}
+  if(S.busy)return;
+  if(!S.proc){log('warn','⚠️ 데이터 수집이 완료되지 않았습니다');return;}
+  const type=card.dataset.type;
+  document.querySelectorAll('.rcard').forEach(c=>c.classList.remove('selected'));card.classList.add('selected');
+  S.busy=true;const ov=document.getElementById('cl-'+type);if(ov)ov.classList.add('active');
   document.getElementById('sl').classList.add('show');
   try{
-    const tl={weekly:'주간진도보고서',monthly:'월별관리카드',quarter:'분기보고서',annual:'연간성과보고서'};
-    log('info',`📋 ${tl[type]} 생성 시작...`);
-    const bd=pBMS(S.bms),wr=pWBS(S.ws,S.wd);
-    log('ok',`집행률 ${bd.execRate}%, WBS ${wr.overall.actualRate}%`);
-    let ai=null;if(document.getElementById('useAI').checked)ai=await getAI(bd,wr);
-    if(!ai){ai=fbAI(bd,wr);log('warn','Fallback 분석 사용')}
-    log('info','📄 DOCX 생성 중...');
-    const doc=bDoc(type,bd,wr,ai);const blob=await docx.Packer.toBlob(doc);
-    const td=new Date().toISOString().slice(0,10);const fn=`${tl[type]}_${td}.docx`;
-    saveAs(blob,fn);log('ok',`✅ ${fn} (${(blob.size/1024).toFixed(0)}KB)`);addH(fn,type);
-  }catch(e){log('err','❌ '+e.message);console.error(e)}
-  finally{S.busy=false;if(overlay)overlay.classList.remove('active')}
-}
-async function loadD(){log('info','📦 데이터 수집 중...');try{const[b,w,d]=await Promise.all([fetch(BU).then(r=>r.json()),fetch(WU).then(r=>r.json()),fetch(WD).then(r=>r.json())]);S.bms=b;S.ws=w;S.wd=d;upK();document.getElementById('dataStatus').textContent='● 실시간';document.getElementById('lastUpdate').textContent=new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}).slice(0,16);log('ok','✅ 데이터 로드 완료')}catch(e){document.getElementById('dataStatus').textContent='⚠️ 오류';log('err','❌ '+e.message)}}
-function upK(){const s=S.bms.summary,t=S.ws.total,n=new Date(),dd=Math.ceil((PE-n)/864e5),el=Math.ceil((n-PS)/864e5),tt=Math.ceil((PE-PS)/864e5),tp=(el/tt*100).toFixed(1);
-  document.getElementById('k1').textContent=s["전체집행률"].toFixed(1)+'%';document.getElementById('k1s').textContent=`${(s["총집행액"]/1e8).toFixed(1)}억 / ${(s["총사업비"]/1e8).toFixed(0)}억`;
-  document.getElementById('k2').textContent=t.actualRate+'%';document.getElementById('k2s').textContent=`완료 ${t.done} / ${t.total}건`;
-  document.getElementById('k3').textContent=tp+'%';document.getElementById('k3s').textContent=`${el}일 / ${tt}일`;
-  document.getElementById('k4').textContent='D-'+dd;document.getElementById('k4s').textContent=`잔여 ${dd}일`}
-function pBMS(b){const s=b.summary,CL={"인건비(110)":"인건비","운영비(210)":"운영비","여비(220)":"여비","연구개발비(260)":"연구개발비","사업비배분(320)":"사업비배분","사업비 배분(320)":"사업비배분","유형자산(430)":"유형자산","무형자산(440)":"무형자산(SW)","건설비(420)":"건설비","기타":"기타"};
-  const mg={};for(const x of b.bimok_summary||[]){const n=CL[x["비목"]]||x["비목"];if(!mg[n])mg[n]={b:0,e:0};mg[n].b+=(x["예산"]||0)/1e8;mg[n].e+=(x["집행"]||0)/1e8}
-  const cats=[];for(const n of["인건비","운영비","여비","연구개발비","유형자산","무형자산(SW)","건설비","사업비배분","기타"])if(mg[n])cats.push({name:n,budget:mg[n].b.toFixed(1),exec:mg[n].e.toFixed(2),rate:mg[n].b?(mg[n].e/mg[n].b*100).toFixed(1):"0.0"});
-  const u={};let cB=0,cE=0;for(const it of b.items||[]){const num=BM[it["항목명"]],ex=it["집행액"]||it["사용금액합계"]||it["사용금액"]||0;if(num){if(!u[num])u[num]={b:0,e:0};u[num].b+=(it["총예산"]||0)/1e8;u[num].e+=ex/1e8}else{cB+=(it["총예산"]||0)/1e8;cE+=ex/1e8}}
-  const prj=[];for(const n of Object.keys(NM).map(Number).sort((a,b)=>a-b)){const x=u[n]||{b:0,e:0};prj.push({num:n,name:NM[n],budget:x.b.toFixed(2),exec:x.e.toFixed(2),rate:x.b?(x.e/x.b*100).toFixed(1):"0.0"})}
-  return{totalBudget:(s["총사업비"]||0)/1e8,totalExec:(s["총집행액"]||0)/1e8,totalRemain:(s["총잔액"]||0)/1e8,execRate:s["전체집행률"]||0,cats,projects:prj,commonB:cB,commonE:cE}}
-function pWBS(ws,wd){const t=ws.total,sv=[];for(const r of wd.items||[])if(r.level==="1"&&r.weight>0)sv.push({name:r.name,weight:r.weight,planned:r.plannedRate,actual:r.actualRate,deviation:r.deviation});sv.sort((a,b)=>b.actual-a.actual);
-  const dl=(wd.items||[]).filter(r=>r.status==="지연"&&r.level!=="1");return{overall:{total:t.total,done:t.done,inProg:t.inProg,delayed:t.delayed,waiting:t.waiting,actualRate:t.actualRate,achieveRate:t.achieveRate},svcs:sv,delayed:dl}}
-async function getAI(bd,wr){
-  log('info','💡 브라우저 환경 → 데이터 기반 자동 분석 사용');
-  return null;
+    const RC=window.ReportCore, RD=window.ReportDoc;
+    log('info',`📋 ${TITLES[type]} 생성 시작...`);
+    const ctx=buildCtx(type);
+    const an=RC.analyze(S.proc.bms,S.proc.wbs,S.proc.asset,S.proc.hr,ctx);
+    log('ok',`분석 완료 — 이슈 ${an.issues.length}건 · 미착수 ${an.zero.length}건 도출`);
+    const doc=RD.build(docx,type,{bms:S.proc.bms,wbs:S.proc.wbs,asset:S.proc.asset,hr:S.proc.hr,an,ctx,RC});
+    log('info','📄 DOCX 문서 조립 중...');
+    const blob=await docx.Packer.toBlob(doc);
+    const td=new Date().toISOString().slice(0,10);
+    const fn=`${FILE[type]}_${td}.docx`;
+    saveAs(blob,fn);
+    log('ok',`✅ ${fn} 생성 완료 (${(blob.size/1024).toFixed(0)}KB)`);
+    addHist(fn);
+  }catch(e){log('err','❌ 생성 실패: '+e.message);console.error(e);}
+  finally{S.busy=false;if(ov)ov.classList.remove('active');}
 }
 
-function fbAI(bd,wr){
-  const n=new Date(),dd=Math.ceil((PE-n)/864e5),el=Math.ceil((n-PS)/864e5),tt=Math.ceil((PE-PS)/864e5),tp=(el/tt*100).toFixed(1),gap=(tp-bd.execRate).toFixed(0),M=n.getMonth()+1,Y=n.getFullYear();
-  const monthRemain=Math.round(dd/30);
-  const monthlyNeed=(bd.totalRemain/monthRemain).toFixed(1);
-  const topProj=bd.projects.filter(p=>parseFloat(p.rate)>50).map(p=>`${p.name}(${p.rate}%)`).join(', ')||'없음';
-  const zeroProj=bd.projects.filter(p=>parseFloat(p.rate)===0&&parseFloat(p.budget)>5);
-  const activeProj=bd.projects.filter(p=>parseFloat(p.rate)>0);
-  return{
-    monthly_achievements:[
-      `BMS 예산 집행 현황 실시간 모니터링 시스템 정상 운영 (${bd.cats.length}개 비목, ${bd.projects.length}개 단위사업)`,
-      `WBS 공정관리 시스템 운영: 전체 ${wr.overall.total}건 중 완료 ${wr.overall.done}건, 진행중 ${wr.overall.inProg}건 관리`,
-      `통합 포털 대시보드 실시간 현행화 (GitHub Actions 30분 자동 갱신)`,
-      `보고서 자동 생성 시스템 v3.0 가동 (주간/월간/분기/연간 4종)`
-    ],
-    project_status:bd.projects.map(p=>{
-      const r=parseFloat(p.rate);
-      let status=r>=90?"완료":(r>0?"진행중":"미착수");
-      let remark=r>=90?`집행 완료 (${p.exec}억/${p.budget}억)`:(r>0?`집행 ${p.exec}억 (잔액 ${(parseFloat(p.budget)-parseFloat(p.exec)).toFixed(1)}억)`:(parseFloat(p.budget)>=10?'발주 준비중':'업체선정 준비'));
-      return{name:p.name,status,remark};
-    }),
-    issues:[
-      {issue:`예산 집행률 격차 (기간소진율 ${tp}% vs 집행률 ${bd.execRate}%)`,impact:`${gap}%p 부족, 국비 환수 리스크`,action:"미착수 대형 사업 조속 발주",progress:"관리중"},
-      ...zeroProj.slice(0,2).map(p=>({issue:`${p.name} 미착수 (예산 ${p.budget}억)`,impact:"공정 지연 및 집행률 저하",action:"발주 일정 수립 및 행정절차 가속",progress:"진행중"})),
-      ...(wr.overall.delayed>3?[{issue:`WBS 지연 작업 ${wr.overall.delayed}건`,impact:"전체 공정률 저하",action:"지연 원인 분석 및 만회 계획",progress:"진행중"}]:[])
-    ],
-    difficulties:["미착수 대형 사업 발주 시 행정 절차 단축 필요","사업기간 내 준공을 위한 집중 관리 체계 강화 필요"],
-    next_plans:[
-      {category:"핵심",content:"미착수 대형사업 발주 추진 (OASIS SPOT, DRT 등)",schedule:`${M===12?1:M+1}월`,owner:"PMO"},
-      {category:"집행",content:`월 ${monthlyNeed}억 집행 목표 달성`,schedule:`${M===12?1:M+1}월`,owner:"PMO/예산"},
-      {category:"품질",content:"WBS 지연 작업 만회 계획 수립 및 이행",schedule:`${M===12?1:M+1}월`,owner:"PMO"},
-      {category:"관리",content:"상위기관 보고서 제출 (국토부/충남도)",schedule:`${M===12?1:M+1}월 5일/10일`,owner:"PMO"}
-    ],
-    executive_summary:`${Y}년 ${M}월 기준 예산 집행률 ${bd.execRate}%(${bd.totalExec.toFixed(1)}억/240억), WBS 공정률 ${wr.overall.actualRate}%(달성률 ${wr.overall.achieveRate}%). 기간 소진율(${tp}%) 대비 집행률 격차 ${gap}%p로 집행 가속화 필요. 잔여 D-${dd}일(약 ${monthRemain}개월), 월평균 ${monthlyNeed}억 집행 필요.`,
-    budget_insight:`총 240억 중 ${bd.totalExec.toFixed(1)}억 집행(${bd.execRate}%). 잔여 ${bd.totalRemain.toFixed(1)}억을 약 ${monthRemain}개월 내 집행해야 하며, 월평균 ${monthlyNeed}억 집행 필요. 집행 완료 또는 고집행 사업: ${topProj}.`,
-    wbs_insight:`전체 ${wr.overall.total}건 중 완료 ${wr.overall.done}건(${(wr.overall.done/wr.overall.total*100).toFixed(0)}%), 진행 ${wr.overall.inProg}건, 지연 ${wr.overall.delayed}건. 진행중 ${activeProj.length}개 단위사업 집중 관리 필요.`,
-    recommendations:["미집행 대형 사업(OASIS SPOT 42억, DRT 10억 등) 발주 가속화","비목간 전용(여비→운영비 등) 검토로 집행 효율화","준공 일정(2026.12.31) 역산 기반 마일스톤 재설정 필요"]
-  };
+function addHist(fn){
+  let h=[];try{h=JSON.parse(sessionStorage.getItem('rh')||'[]')}catch(e){}
+  h.unshift({f:fn,d:new Date().toISOString()});h=h.slice(0,12);
+  try{sessionStorage.setItem('rh',JSON.stringify(h))}catch(e){}
+  renderHist(h);
+}
+function renderHist(h){
+  if(!h){try{h=JSON.parse(sessionStorage.getItem('rh')||'[]')}catch(e){h=[]}}
+  const e=document.getElementById('hl');
+  if(!h.length){e.innerHTML='<div class="hist-item"><span class="hist-date">생성 이력이 없습니다</span></div>';return;}
+  e.innerHTML=h.map(x=>`<div class="hist-item"><span class="hist-name">📄 ${x.f}</span><span class="hist-date">${new Date(x.d).toLocaleString('ko-KR').slice(0,16)}</span></div>`).join('');
 }
 
-async function gen(){if(S.busy||!S.bms)return;S.busy=true;document.getElementById('sl').classList.add('show');
-  try{log('info',`📋 ${S.type} 생성 시작...`);const bd=pBMS(S.bms),wr=pWBS(S.ws,S.wd);log('ok',`집행률 ${bd.execRate}%, WBS ${wr.overall.actualRate}%`);
-    let ai=null;if(document.getElementById('useAI').checked)ai=await getAI(bd,wr);if(!ai){ai=fbAI(bd,wr);log('warn','Fallback 사용')}
-    log('info','📄 DOCX 생성 중...');const doc=bDoc(S.type,bd,wr,ai);const blob=await docx.Packer.toBlob(doc);
-    const tl={weekly:'주간진도보고서',monthly:'월별관리카드',quarter:'분기보고서',annual:'연간성과보고서'};const td=new Date().toISOString().slice(0,10);const fn=`${tl[S.type]}_${td}.docx`;
-    saveAs(blob,fn);log('ok',`✅ ${fn} (${(blob.size/1024).toFixed(0)}KB)`);addH(fn,S.type)}catch(e){log('err','❌ '+e.message);console.error(e)}finally{S.busy=false}}
-
-function bDoc(type,bms,wbs,ai){
-  const{Document:D,Paragraph:P,TextRun:T,Table:Tb,TableRow:TR,TableCell:TC,Header:H,Footer:F,
-    AlignmentType:A,HeadingLevel:HL,BorderStyle:BS,WidthType:WT,ShadingType:ST,LevelFormat:LF,PageBreak:PB,PageNumber:PN}=docx;
-  const TW=9026,td=new Date().toISOString().slice(0,10);
-  const n=new Date(),dd=Math.ceil((PE-n)/864e5),el=Math.ceil((n-PS)/864e5),tt=Math.ceil((PE-PS)/864e5),tp=(el/tt*100).toFixed(1);
-  const Y=n.getFullYear(),M=n.getMonth()+1,Q=Math.ceil(M/3);
-  const br={style:BS.SINGLE,size:1,color:"BBBBBB"},bo={top:br,bottom:br,left:br,right:br},cm={top:60,bottom:60,left:100,right:100};
-  const hs={fill:"1B3A5C",type:ST.CLEAR},alt={fill:"F0F5FA",type:ST.CLEAR},warn={fill:"FFF3CD",type:ST.CLEAR},info={fill:"E8F4FD",type:ST.CLEAR};
-  const hC=(t,w)=>new TC({borders:bo,width:{size:w,type:WT.DXA},shading:hs,margins:cm,verticalAlign:"center",children:[new P({alignment:A.CENTER,children:[new T({text:t,bold:true,font:"맑은 고딕",size:18,color:"FFFFFF"})]})]});
-  const dC=(t,w,o={})=>new TC({borders:bo,width:{size:w,type:WT.DXA},margins:cm,shading:o.shade?alt:undefined,verticalAlign:"center",children:[new P({alignment:o.align||A.LEFT,children:[new T({text:String(t),font:"맑은 고딕",size:18,bold:o.bold,color:o.color})]})]});
-  const rc=v=>parseFloat(v)>=80?"00B050":(parseFloat(v)>=30?"ED7D31":"C00000");
-  const tts={weekly:"주간 진도 보고서",monthly:"월별 관리카드",quarter:`${Q}분기 보고서`,annual:"연간 성과보고서"};
-  const ch=[];
-
-  // ══════ 표지 ══════
-  ch.push(new P({spacing:{before:2400},alignment:A.CENTER,children:[new T({text:"스마트시티 조성사업 월간 추진현황 보고",font:"맑은 고딕",size:44,bold:true,color:"1B3A5C"})]}));
-  if(type==='weekly')
-    ch.push(new P({spacing:{before:200},alignment:A.CENTER,children:[new T({text:"(주간 진도 보고서)",font:"맑은 고딕",size:32,color:"444444"})]}));
-  else if(type==='quarter')
-    ch.push(new P({spacing:{before:200},alignment:A.CENTER,children:[new T({text:`(${Y}년 ${Q}분기)`,font:"맑은 고딕",size:32,color:"444444"})]}));
-  else if(type==='annual')
-    ch.push(new P({spacing:{before:200},alignment:A.CENTER,children:[new T({text:`(${Y}년 연간 성과보고서)`,font:"맑은 고딕",size:32,color:"444444"})]}));
-  else
-    ch.push(new P({spacing:{before:200},alignment:A.CENTER,children:[new T({text:`(${Y}년 ${M}월)`,font:"맑은 고딕",size:32,color:"444444"})]}));
-
-  ch.push(new P({spacing:{before:600}}));
-  const cvC=[3000,6026];
-  ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:cvC,rows:[
-    new TR({children:[hC("사 업 명",cvC[0]),dC("아산시 강소형 스마트시티 조성사업",cvC[1],{bold:true})]}),
-    new TR({children:[hC("사업위치",cvC[0]),dC("충청남도 아산시 도고면·배방읍 일원",cvC[1])]}),
-    new TR({children:[hC("사업기간",cvC[0]),dC("2023.08 ~ 2026.12 (구축 4년, 운영 3년)",cvC[1])]}),
-    new TR({children:[hC("총사업비",cvC[0]),dC("240억원 (국비 120억, 지방비 120억)",cvC[1])]}),
-    new TR({children:[hC("제 출 일",cvC[0]),dC(`${Y}년 ${M}월 ${n.getDate()}일`,cvC[1])]}),
-    new TR({children:[hC("제 출 처",cvC[0]),dC("아산시 스마트도시팀",cvC[1])]}),
-  ]}));
-  ch.push(new P({spacing:{before:800},alignment:A.CENTER,children:[new T({text:"아 산 시",font:"맑은 고딕",size:36,bold:true,color:"1B3A5C"})]}));
-  ch.push(new P({children:[new PB()]}));
-
-  // ══════ 1. 사업 개요 ══════
-  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"1. 사업 개요",font:"맑은 고딕"})]}));
-  ch.push(new P({heading:HL.HEADING_2,children:[new T({text:"1.1 사업 기본정보",font:"맑은 고딕"})]}));
-  const infoC=[2500,6526];
-  ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:infoC,rows:[
-    new TR({children:[hC("사업명",infoC[0]),dC("아산시 강소형 스마트시티 조성사업",infoC[1])]}),
-    new TR({children:[hC("사업유형",infoC[0]),dC("기존도시 - 지역소멸대응/인구변화대응",infoC[1])]}),
-    new TR({children:[hC("사업위치",infoC[0]),dC("충청남도 아산시 도고면·배방읍 일원",infoC[1])]}),
-    new TR({children:[hC("사업기간",infoC[0]),dC("2023년 8월 ~ 2026년 12월 (연장)",infoC[1])]}),
-    new TR({children:[hC("총사업비",infoC[0]),dC("240억원 (국비 120억, 도비 28.8억, 시비 91.2억)",infoC[1])]}),
-    new TR({children:[hC("주관기관",infoC[0]),dC("아산시 스마트도시팀",infoC[1])]}),
-    new TR({children:[hC("수행기관",infoC[0]),dC("(주)제일엔지니어링 컨소시엄",infoC[1])]}),
-  ]}));
-  ch.push(new P({spacing:{after:200}}));
-
-  // ══════ 2. 예산 집행 현황 ══════
-  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"2. 예산 집행 현황",font:"맑은 고딕"})]}));
-
-  // 2.1 총괄
-  ch.push(new P({heading:HL.HEADING_2,children:[new T({text:"2.1 총괄 집행현황 (누계)",font:"맑은 고딕"})]}));
-  const sumC=[3000,3013,3013];
-  ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:sumC,rows:[
-    new TR({children:[hC("구분",sumC[0]),hC("금액",sumC[1]),hC("비율",sumC[2])]}),
-    new TR({children:[dC("총 사업비",sumC[0],{bold:true}),dC("240.0억원",sumC[1],{align:A.RIGHT}),dC("100%",sumC[2],{align:A.CENTER})]}),
-    new TR({children:[dC("누계 집행액",sumC[0],{bold:true,shade:true}),dC(`${bms.totalExec.toFixed(1)}억원`,sumC[1],{align:A.RIGHT,shade:true,bold:true,color:"2E75B6"}),dC(`${bms.execRate}%`,sumC[2],{align:A.CENTER,shade:true,bold:true,color:rc(bms.execRate)})]}),
-    new TR({children:[dC("잔액",sumC[0],{bold:true}),dC(`${bms.totalRemain.toFixed(1)}억원`,sumC[1],{align:A.RIGHT}),dC(`${(100-bms.execRate).toFixed(1)}%`,sumC[2],{align:A.CENTER})]}),
-  ]}));
-
-  // AI 예산 인사이트
-  if(ai.budget_insight) ch.push(new P({spacing:{before:100,after:120},shading:info,children:[new T({text:"💡 "+ai.budget_insight,font:"맑은 고딕",size:18,color:"0C5460"})]}));
-
-  // 2.2 재원별
-  ch.push(new P({heading:HL.HEADING_2,children:[new T({text:"2.2 재원별 집행현황",font:"맑은 고딕"})]}));
-  const srcC=[1500,1500,1500,1500,1500,1526];
-  ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:srcC,rows:[
-    new TR({children:[hC("재원",srcC[0]),hC("총예산",srcC[1]),hC("전월누계",srcC[2]),hC("금월집행",srcC[3]),hC("누계",srcC[4]),hC("집행률",srcC[5])]}),
-    new TR({children:[dC("국비",srcC[0],{bold:true}),dC("120.0억",srcC[1],{align:A.RIGHT}),dC("-",srcC[2],{align:A.RIGHT}),dC("-",srcC[3],{align:A.RIGHT}),dC(`${(bms.totalExec*0.5).toFixed(1)}억`,srcC[4],{align:A.RIGHT}),dC(`${bms.execRate}%`,srcC[5],{align:A.CENTER,bold:true,color:rc(bms.execRate)})]}),
-    new TR({children:[dC("지방비(도+시)",srcC[0],{bold:true,shade:true}),dC("120.0억",srcC[1],{align:A.RIGHT,shade:true}),dC("-",srcC[2],{align:A.RIGHT,shade:true}),dC("-",srcC[3],{align:A.RIGHT,shade:true}),dC(`${(bms.totalExec*0.5).toFixed(1)}억`,srcC[4],{align:A.RIGHT,shade:true}),dC(`${bms.execRate}%`,srcC[5],{align:A.CENTER,bold:true,shade:true})]}),
-    new TR({children:[dC("합계",srcC[0],{bold:true}),dC("240.0억",srcC[1],{align:A.RIGHT,bold:true}),dC("-",srcC[2],{align:A.RIGHT}),dC("-",srcC[3],{align:A.RIGHT}),dC(`${bms.totalExec.toFixed(1)}억`,srcC[4],{align:A.RIGHT,bold:true}),dC(`${bms.execRate}%`,srcC[5],{align:A.CENTER,bold:true,color:rc(bms.execRate)})]}),
-  ]}));
-  ch.push(new P({spacing:{after:100}}));
-
-  // 2.3 비목별
-  ch.push(new P({heading:HL.HEADING_2,children:[new T({text:"2.3 비목별 집행현황",font:"맑은 고딕"})]}));
-  const cC=[2000,1800,1800,1800,1626];
-  ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:cC,rows:[
-    new TR({children:[hC("비목",cC[0]),hC("예산(억)",cC[1]),hC("집행(억)",cC[2]),hC("잔액(억)",cC[3]),hC("집행률",cC[4])]}),
-    ...bms.cats.map((c,i)=>{const rm=(parseFloat(c.budget)-parseFloat(c.exec)).toFixed(1);
-      return new TR({children:[dC(c.name,cC[0],{bold:true,shade:i%2===1}),dC(c.budget,cC[1],{align:A.RIGHT,shade:i%2===1}),
-        dC(c.exec,cC[2],{align:A.RIGHT,shade:i%2===1}),dC(rm,cC[3],{align:A.RIGHT,shade:i%2===1}),
-        dC(`${c.rate}%`,cC[4],{align:A.CENTER,bold:true,color:rc(c.rate),shade:i%2===1})]})})
-  ]}));
-  ch.push(new P({children:[new PB()]}));
-
-  // ══════ 3. 세부사업별 추진현황 ══════
-  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"3. 세부사업별 추진현황",font:"맑은 고딕"})]}));
-  const pSt=ai.project_status||[];
-  const pC=[500,3000,1200,1200,1200,1926];
-  ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:pC,rows:[
-    new TR({children:[hC("No",pC[0]),hC("세부사업/과업",pC[1]),hC("현황",pC[2]),hC("집행률",pC[3]),hC("예산(억)",pC[4]),hC("비고",pC[5])]}),
-    ...bms.projects.map((p,i)=>{
-      const st=pSt.find(x=>x.name&&(p.name.includes(x.name.slice(0,4))||x.name.includes(p.name.slice(0,4))));
-      const status=st?st.status:(parseFloat(p.rate)>=90?"완료":(parseFloat(p.rate)>0?"진행중":"미착수"));
-      const remark=st?st.remark:`집행 ${p.exec}억`;
-      const stColor=status==="완료"?"00B050":(status==="진행중"?"2E75B6":(status==="지연"?"C00000":"888888"));
-      return new TR({children:[dC(p.num,pC[0],{align:A.CENTER,shade:i%2===1}),dC(p.name,pC[1],{bold:true,shade:i%2===1}),
-        dC(status,pC[2],{align:A.CENTER,bold:true,color:stColor,shade:i%2===1}),
-        dC(`${p.rate}%`,pC[3],{align:A.CENTER,bold:true,color:rc(p.rate),shade:i%2===1}),
-        dC(p.budget,pC[4],{align:A.RIGHT,shade:i%2===1}),dC(remark,pC[5],{shade:i%2===1})]})})
-  ]}));
-  ch.push(new P({spacing:{after:200}}));
-
-  // ══════ 4. 금월 주요 추진실적 ══════
-  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:`4. ${type==='weekly'?'금주':'금월'} 주요 추진실적`,font:"맑은 고딕"})]}));
-  ch.push(new P({heading:HL.HEADING_2,children:[new T({text:"4.1 주요 성과/진척",font:"맑은 고딕"})]}));
-  for(const a of (ai.monthly_achievements||[]))
-    ch.push(new P({numbering:{reference:"bullets",level:0},spacing:{before:40},children:[new T({text:a,font:"맑은 고딕",size:20})]}));
-  ch.push(new P({spacing:{after:200}}));
-
-  // ══════ 5. 주요 이슈 및 대응현황 ══════
-  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"5. 주요 이슈 및 대응현황",font:"맑은 고딕"})]}));
-  const issues=ai.issues||[];
-  if(issues.length){
-    const iC=[500,2500,1800,2200,2026];
-    ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:iC,rows:[
-      new TR({children:[hC("No",iC[0]),hC("이슈사항",iC[1]),hC("영향",iC[2]),hC("대응방안",iC[3]),hC("조치현황",iC[4])]}),
-      ...issues.map((x,i)=>new TR({children:[dC(i+1,iC[0],{align:A.CENTER,shade:i%2===1}),dC(x.issue,iC[1],{bold:true,shade:i%2===1}),
-        dC(x.impact,iC[2],{shade:i%2===1}),dC(x.action,iC[3],{shade:i%2===1}),dC(x.progress,iC[4],{align:A.CENTER,shade:i%2===1})]}))
-    ]}));
-  }
-  // 애로사항
-  if(ai.difficulties?.length){
-    ch.push(new P({spacing:{before:200},heading:HL.HEADING_2,children:[new T({text:"5.1 애로사항 및 건의",font:"맑은 고딕"})]}));
-    for(const d of ai.difficulties)
-      ch.push(new P({numbering:{reference:"bullets",level:0},children:[new T({text:d,font:"맑은 고딕",size:20})]}));
-  }
-  ch.push(new P({children:[new PB()]}));
-
-  // ══════ 6. 향후 계획 ══════
-  ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"6. 향후 추진계획",font:"맑은 고딕"})]}));
-  const plans=ai.next_plans||[];
-  if(plans.length){
-    const plC=[1200,3826,2000,2000];
-    ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:plC,rows:[
-      new TR({children:[hC("구분",plC[0]),hC("추진내용",plC[1]),hC("일정",plC[2]),hC("담당",plC[3])]}),
-      ...plans.map((x,i)=>new TR({children:[dC(x.category||"-",plC[0],{align:A.CENTER,bold:true,shade:i%2===1}),dC(x.content,plC[1],{shade:i%2===1}),
-        dC(x.schedule||"-",plC[2],{align:A.CENTER,shade:i%2===1}),dC(x.owner||"PMO",plC[3],{align:A.CENTER,shade:i%2===1})]}))
-    ]}));
-  }
-
-  // PMO 권고
-  if(ai.recommendations?.length){
-    ch.push(new P({spacing:{before:200},heading:HL.HEADING_2,children:[new T({text:"6.1 PMO 권고사항",font:"맑은 고딕"})]}));
-    for(const r of ai.recommendations) ch.push(new P({numbering:{reference:"bullets",level:0},children:[new T({text:r,font:"맑은 고딕",size:20})]}));
-  }
-  ch.push(new P({spacing:{after:200}}));
-
-  // ══════ 분기/연간 추가 섹션 ══════
-  if(type==='quarter'||type==='annual'){
-    ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"7. WBS 공정률 현황",font:"맑은 고딕"})]}));
-    if(ai.wbs_insight) ch.push(new P({spacing:{after:120},shading:info,children:[new T({text:"💡 "+ai.wbs_insight,font:"맑은 고딕",size:18,color:"0C5460"})]}));
-    const wC=[1504,1504,1506,1504,1504,1504];
-    ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:wC,rows:[
-      new TR({children:[hC("전체",wC[0]),hC("완료",wC[1]),hC("진행",wC[2]),hC("지연",wC[3]),hC("대기",wC[4]),hC("달성률",wC[5])]}),
-      new TR({children:[dC(`${wbs.overall.total}건`,wC[0],{align:A.CENTER,bold:true}),dC(`${wbs.overall.done}건`,wC[1],{align:A.CENTER,bold:true,color:"00B050"}),
-        dC(`${wbs.overall.inProg}건`,wC[2],{align:A.CENTER,bold:true,color:"2E75B6"}),dC(`${wbs.overall.delayed}건`,wC[3],{align:A.CENTER,bold:true,color:"C00000"}),
-        dC(`${wbs.overall.waiting}건`,wC[4],{align:A.CENTER,bold:true,color:"ED7D31"}),dC(`${wbs.overall.achieveRate}%`,wC[5],{align:A.CENTER,bold:true,color:"7030A0"})]})]}));
-    // Level-1
-    if(wbs.svcs.length){
-      ch.push(new P({spacing:{before:200},heading:HL.HEADING_2,children:[new T({text:"7.1 Level-1 공정률 (가중평균)",font:"맑은 고딕"})]}));
-      const sC=[3200,1200,1500,1500,1626];
-      ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:sC,rows:[
-        new TR({children:[hC("분류",sC[0]),hC("가중치",sC[1]),hC("계획",sC[2]),hC("실적",sC[3]),hC("편차",sC[4])]}),
-        ...wbs.svcs.map((s,i)=>{const dc=s.deviation>=0?"00B050":"C00000";
-          return new TR({children:[dC(s.name,sC[0],{bold:true,shade:i%2===1}),dC(`${s.weight}%`,sC[1],{align:A.CENTER,shade:i%2===1}),
-            dC(`${s.planned}%`,sC[2],{align:A.CENTER,shade:i%2===1}),dC(`${s.actual}%`,sC[3],{align:A.CENTER,bold:true,shade:i%2===1}),
-            dC(`${s.deviation>0?"+":""}${s.deviation}%p`,sC[4],{align:A.CENTER,bold:true,color:dc,shade:i%2===1})]})})]}));
-    }
-    // 성과지표
-    ch.push(new P({spacing:{before:200},heading:HL.HEADING_1,children:[new T({text:"8. 성과지표 달성 현황",font:"맑은 고딕"})]}));
-    const kpiC=[3000,2000,2000,2026];
-    ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:kpiC,rows:[
-      new TR({children:[hC("성과지표",kpiC[0]),hC("목표",kpiC[1]),hC("실적",kpiC[2]),hC("달성률",kpiC[3])]}),
-      new TR({children:[dC("예산 집행률",kpiC[0],{bold:true}),dC("100%",kpiC[1],{align:A.CENTER}),dC(`${bms.execRate}%`,kpiC[2],{align:A.CENTER}),dC(`${bms.execRate}%`,kpiC[3],{align:A.CENTER,bold:true,color:rc(bms.execRate)})]}),
-      new TR({children:[dC("WBS 공정률",kpiC[0],{bold:true,shade:true}),dC("100%",kpiC[1],{align:A.CENTER,shade:true}),dC(`${wbs.overall.actualRate}%`,kpiC[2],{align:A.CENTER,shade:true}),dC(`${wbs.overall.achieveRate}%`,kpiC[3],{align:A.CENTER,bold:true,shade:true})]}),
-      new TR({children:[dC("서비스 구축",kpiC[0],{bold:true}),dC(`${wbs.overall.total}건`,kpiC[1],{align:A.CENTER}),dC(`${wbs.overall.done}건`,kpiC[2],{align:A.CENTER}),dC(`${(wbs.overall.done/wbs.overall.total*100).toFixed(0)}%`,kpiC[3],{align:A.CENTER,bold:true})]}),
-    ]}));
-  }
-
-  if(type==='annual'){
-    ch.push(new P({children:[new PB()]}));
-    ch.push(new P({heading:HL.HEADING_1,children:[new T({text:"9. 사업 추진체계",font:"맑은 고딕"})]}));
-    const orgC=[2000,3000,4026];
-    ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:orgC,rows:[
-      new TR({children:[hC("구분",orgC[0]),hC("기관",orgC[1]),hC("역할",orgC[2])]}),
-      new TR({children:[dC("시행기관",orgC[0],{bold:true}),dC("아산시",orgC[1]),dC("스마트도시팀, 사업총괄",orgC[2])]}),
-      new TR({children:[dC("직접보조사업자",orgC[0],{bold:true,shade:true}),dC("제일엔지니어링",orgC[1],{shade:true}),dC("PMO, 사업관리·기술지원",orgC[2],{shade:true})]}),
-      new TR({children:[dC("간접보조사업자",orgC[0],{bold:true}),dC("호서대학교",orgC[1]),dC("이노베이션센터 운영",orgC[2])]}),
-      new TR({children:[dC("간접보조사업자",orgC[0],{bold:true,shade:true}),dC("충남연구원",orgC[1],{shade:true}),dC("연구·정책지원",orgC[2],{shade:true})]}),
-      new TR({children:[dC("간접보조사업자",orgC[0],{bold:true}),dC("KAIST",orgC[1]),dC("기술자문·연구지원",orgC[2])]}),
-    ]}));
-  }
-
-  // ══════ 지연작업 부록 ══════
-  if(document.getElementById('incDel').checked&&wbs.delayed.length){
-    ch.push(new P({children:[new PB()]}));
-    ch.push(new P({heading:HL.HEADING_1,children:[new T({text:`[부록] WBS 지연 작업 (${wbs.delayed.length}건)`,font:"맑은 고딕"})]}));
-    const dL=[3500,2500,1500,1526];
-    ch.push(new Tb({width:{size:TW,type:WT.DXA},columnWidths:dL,rows:[
-      new TR({children:[hC("작업명",dL[0]),hC("대분류",dL[1]),hC("담당",dL[2]),hC("편차",dL[3])]}),
-      ...wbs.delayed.slice(0,15).map((d,i)=>new TR({children:[dC(d.name,dL[0],{shade:i%2===1}),dC(d.category||"-",dL[1],{shade:i%2===1}),
-        dC(d.organization||"-",dL[2],{shade:i%2===1}),dC(`${d.deviation}%p`,dL[3],{align:A.CENTER,bold:true,color:"C00000",shade:i%2===1})]}))
-    ]}));
-  }
-
-  // ══════ 7. 첨부/체크리스트 ══════
-  ch.push(new P({spacing:{before:300},heading:HL.HEADING_1,children:[new T({text:type==='quarter'||type==='annual'?"10. 첨부자료":"7. 첨부자료",font:"맑은 고딕"})]}));
-  ch.push(new P({numbering:{reference:"nums",level:0},children:[new T({text:"세부사업별 추진현황 상세 (별첨 1)",font:"맑은 고딕",size:20})]}));
-  ch.push(new P({numbering:{reference:"nums",level:0},children:[new T({text:"예산집행 상세내역 (별첨 2)",font:"맑은 고딕",size:20})]}));
-  ch.push(new P({numbering:{reference:"nums",level:0},children:[new T({text:"현장사진 (별첨 3)",font:"맑은 고딕",size:20})]}));
-  ch.push(new P({spacing:{before:200,after:100},shading:{fill:"E6F4EA",type:ST.CLEAR},children:[
-    new T({text:"✅ 제출 체크리스트: □ 데이터 정합성 검증  □ PM 검토  □ 팀장 승인  □ 첨부자료 확인  □ e-나라도움 등록",font:"맑은 고딕",size:16,color:"1E7E34"})]}));
-  ch.push(new P({spacing:{before:100},alignment:A.RIGHT,children:[
-    new T({text:`작성: PMO팀  |  검토: 이성호 PM  |  승인: 박상국 팀장  |  제출기한: 익월 5일`,font:"맑은 고딕",size:16,color:"888888"})]}));
-
-  return new D({numbering:{config:[
-    {reference:"bullets",levels:[{level:0,format:LF.BULLET,text:"\u2022",alignment:A.LEFT,style:{paragraph:{indent:{left:720,hanging:360}}}}]},
-    {reference:"nums",levels:[{level:0,format:LF.DECIMAL,text:"%1.",alignment:A.LEFT,style:{paragraph:{indent:{left:720,hanging:360}}}}]},
-  ]},
-    styles:{default:{document:{run:{font:"맑은 고딕",size:20}}},paragraphStyles:[
-      {id:"Heading1",name:"Heading 1",basedOn:"Normal",next:"Normal",quickFormat:true,run:{size:28,bold:true,font:"맑은 고딕",color:"1B3A5C"},paragraph:{spacing:{before:360,after:120},outlineLevel:0}},
-      {id:"Heading2",name:"Heading 2",basedOn:"Normal",next:"Normal",quickFormat:true,run:{size:24,bold:true,font:"맑은 고딕",color:"2E75B6"},paragraph:{spacing:{before:240,after:100},outlineLevel:1}}]},
-    sections:[{properties:{page:{size:{width:11906,height:16838},margin:{top:1440,bottom:1440,left:1440,right:1440}}},
-      headers:{default:new H({children:[new P({alignment:A.RIGHT,children:[new T({text:`아산시 스마트시티 | ${tts[type]} (${td})`,font:"맑은 고딕",size:16,color:"999999"})]})]})},
-      footers:{default:new F({children:[new P({alignment:A.CENTER,children:[
-        new T({text:"아산시 스마트도시팀 · 제일엔지니어링 PMO | ",font:"맑은 고딕",size:16,color:"999999"}),
-        new T({children:[PN.CURRENT],font:"맑은 고딕",size:16,color:"999999"}),
-        new T({text:" / ",font:"맑은 고딕",size:16,color:"999999"}),
-        new T({children:[PN.TOTAL_PAGES],font:"맑은 고딕",size:16,color:"999999"})]})]})},children:ch}]});
-}
-
-function log(t,m){const e=document.getElementById('sl');e.classList.add('show');const c={ok:'ok',warn:'warn',err:'err',ai:'ai',info:''}[t]||'';e.innerHTML+=`<div class="${c}">${new Date().toLocaleTimeString('ko-KR')} ${m}</div>`;e.scrollTop=e.scrollHeight}
-function addH(f,t){const h=JSON.parse(localStorage.getItem('rh')||'[]');h.unshift({f,t,d:new Date().toISOString()});if(h.length>20)h.length=20;localStorage.setItem('rh',JSON.stringify(h));loadH()}
-function loadH(){const h=JSON.parse(localStorage.getItem('rh')||'[]'),e=document.getElementById('hl');
-  if(!h.length){e.innerHTML='<div class="hist-item"><span class="hist-date">이력 없음</span></div>';return}
-  const tl={weekly:'주간',monthly:'월별',quarter:'분기',annual:'연간'};
-  e.innerHTML=h.map(x=>`<div class="hist-item"><span class="hist-name">${tl[x.t]||x.t} — ${x.f}</span><span class="hist-date">${new Date(x.d).toLocaleString('ko-KR').slice(0,16)}</span></div>`).join('')}
+window.addEventListener('load',async()=>{ renderHist(); await loadAll(); });
 </script>
-</body></html>
+</body>
+</html>
