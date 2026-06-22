@@ -242,7 +242,17 @@ footer{text-align:center;color:var(--t3);font-size:.72rem;padding:2rem 1.5rem;bo
       wbsId: r.wbsId, name: r.name.replace(/^\[[^\]]+\]\s*/, ""), org: r.organization,
       planned: r.plannedRate, actual: r.actualRate, deviation: r.deviation, endDate: r.endDate, note: r.note,
     }));
-    return { overall, byCat, lvl1, delayed };
+    // 단위사업별 추진현황 — WBS [4.x] level-2 항목(서비스 구축 하위)이 실제 단위사업 진행현황
+    const units = [];
+    for (const r of data.items || []) {
+      if (String(r.level) !== "2") continue;
+      const m = String(r.name).match(/^\[4\.(\d+)\]\s*(.+)$/);
+      if (!m) continue;
+      const planned = +r.plannedRate || 0, actual = +r.actualRate || 0;
+      units.push({ idx: +m[1], name: m[2].trim(), planned, actual, deviation: +(actual - planned).toFixed(1), status: r.status || "-" });
+    }
+    units.sort((a, b) => a.idx - b.idx);
+    return { overall, byCat, lvl1, units, delayed };
   }
 
   function processAsset(a) {
@@ -580,12 +590,7 @@ footer{text-align:center;color:var(--t3);font-size:.72rem;padding:2rem 1.5rem;bo
     bcRows.push(new TableRow({ children: [dc("합계", bc[0], { bold: true, gold: true }), dc(f1(bms.totalBudget), bc[1], { align: AlignmentType.RIGHT, bold: true, gold: true }), dc(f1(bms.totalExec), bc[2], { align: AlignmentType.RIGHT, bold: true, gold: true }), dc(f1(bms.totalRemain), bc[3], { align: AlignmentType.RIGHT, bold: true, gold: true }), dc(f1(bms.execRate) + "%", bc[4], { align: AlignmentType.CENTER, bold: true, gold: true }), dc(bms.itemCount, bc[5], { align: AlignmentType.CENTER, bold: true, gold: true })] }));
     ch.push(table(bc, bcRows));
 
-    ch.push(H2("3. 단위사업별 집행 현황"));
-    const uc = [600, 3326, 1450, 1450, 1100, 1100];
-    const ucRows = [new TableRow({ children: [hc("No", uc[0]), hc("단위사업", uc[1]), hc("예산", uc[2]), hc("집행", uc[3]), hc("집행률", uc[4]), hc("상태", uc[5])] })];
-    bms.projects.forEach((p, i) => { const st = p.rate >= 90 ? "집행완료" : p.rate > 0 ? "진행중" : "미착수"; ucRows.push(new TableRow({ children: [dc(p.num, uc[0], { align: AlignmentType.CENTER, shade: i % 2 === 1 }), dc(p.name, uc[1], { bold: true, shade: i % 2 === 1 }), dc(f2(p.budget), uc[2], { align: AlignmentType.RIGHT, shade: i % 2 === 1 }), dc(f2(p.exec), uc[3], { align: AlignmentType.RIGHT, shade: i % 2 === 1 }), dc(f1(p.rate) + "%", uc[4], { align: AlignmentType.CENTER, bold: true, color: rateColor(p.rate), shade: i % 2 === 1 }), dc(st, uc[5], { align: AlignmentType.CENTER, color: st === "미착수" ? C.bad : st === "집행완료" ? C.ok : C.warn, shade: i % 2 === 1 })] })); });
-    if (bms.commonB > 0) ucRows.push(new TableRow({ children: [dc("공통", uc[0], { align: AlignmentType.CENTER, shade: true }), dc("공통비(인건비·운영비·감리 등)", uc[1], { bold: true, shade: true }), dc(f2(bms.commonB), uc[2], { align: AlignmentType.RIGHT, shade: true }), dc(f2(bms.commonE), uc[3], { align: AlignmentType.RIGHT, shade: true }), dc(f1(bms.commonB ? bms.commonE / bms.commonB * 100 : 0) + "%", uc[4], { align: AlignmentType.CENTER, shade: true }), dc("-", uc[5], { align: AlignmentType.CENTER, shade: true })] }));
-    ch.push(table(uc, ucRows));
+    ch.push(new Paragraph({ spacing: { before: 40 }, children: [run("※ 단위사업별 추진현황은 ", { size: 15, color: C.gray }), run("Ⅳ. 사업 공정(WBS)", { size: 15, color: C.head, bold: true }), run("의 「단위사업별 추진현황(WBS 사업진행현황)」 참조", { size: 15, color: C.gray })] }));
     ch.push(new Paragraph({ children: [new PageBreak()] }));
 
     // ════════ Ⅳ. WBS 공정 ════════
@@ -616,12 +621,20 @@ footer{text-align:center;color:var(--t3);font-size:.72rem;padding:2rem 1.5rem;bo
       ch.push(table(cc, ccRows));
     }
 
-    if (wbs.lvl1.length) {
-      ch.push(H2("3. 주요 공정(Level-1) 추진현황"));
-      const lc = [800, 3326, 1700, 1100, 1100, 1000];
-      const lcRows = [new TableRow({ children: [hc("WBS", lc[0]), hc("공정명", lc[1]), hc("담당", lc[2]), hc("계획", lc[3]), hc("실적", lc[4]), hc("상태", lc[5])] })];
-      wbs.lvl1.slice(0, 14).forEach((r, i) => lcRows.push(new TableRow({ children: [dc(r.wbsId, lc[0], { align: AlignmentType.CENTER, shade: i % 2 === 1 }), dc(r.name, lc[1], { size: 15, shade: i % 2 === 1 }), dc(r.org || "-", lc[2], { size: 15, shade: i % 2 === 1 }), dc(f1(r.planned) + "%", lc[3], { align: AlignmentType.CENTER, size: 15, shade: i % 2 === 1 }), dc(f1(r.actual) + "%", lc[4], { align: AlignmentType.CENTER, bold: true, size: 15, color: rateColor(r.actual), shade: i % 2 === 1 }), dc(r.status, lc[5], { align: AlignmentType.CENTER, size: 15, color: r.status === "지연" ? C.bad : r.status === "완료" ? C.ok : C.warn, shade: i % 2 === 1 })] })));
+    if (wbs.units && wbs.units.length) {
+      ch.push(H2("3. 단위사업별 추진현황 (WBS 사업진행현황 기준)"));
+      const lc = [620, 3706, 1150, 1150, 1050, 900];
+      const lcRows = [new TableRow({ children: [hc("No", lc[0]), hc("단위사업", lc[1]), hc("계획공정률", lc[2]), hc("실적공정률", lc[3]), hc("편차", lc[4]), hc("상태", lc[5])] })];
+      wbs.units.forEach((u, i) => lcRows.push(new TableRow({ children: [
+        dc(u.idx, lc[0], { align: AlignmentType.CENTER, shade: i % 2 === 1 }),
+        dc(u.name, lc[1], { bold: true, size: 16, shade: i % 2 === 1 }),
+        dc(f1(u.planned) + "%", lc[2], { align: AlignmentType.CENTER, shade: i % 2 === 1 }),
+        dc(f1(u.actual) + "%", lc[3], { align: AlignmentType.CENTER, bold: true, color: rateColor(u.actual), shade: i % 2 === 1 }),
+        dc((u.deviation > 0 ? "+" : "") + f1(u.deviation), lc[4], { align: AlignmentType.CENTER, color: u.deviation < 0 ? C.bad : C.ok, shade: i % 2 === 1 }),
+        dc(u.status, lc[5], { align: AlignmentType.CENTER, color: u.status === "지연" ? C.bad : u.status === "완료" ? C.ok : C.warn, shade: i % 2 === 1 }),
+      ] })));
       ch.push(table(lc, lcRows));
+      ch.push(new Paragraph({ spacing: { before: 30 }, children: [run("※ WBS 「서비스 구축」 하위 단위사업(4.x)의 계획·실적 공정률 기준, 실시간 연동", { size: 15, color: C.gray })] }));
     }
     ch.push(new Paragraph({ children: [new PageBreak()] }));
 
