@@ -1,7 +1,7 @@
 {
-  "generated": "2026-07-03T19:37:40.983Z",
-  "week": "W27 (06-29 ~ 07-03)",
-  "dday": 181,
+  "generated": "2026-07-10T19:56:10.858Z",
+  "week": "W28 (07-06 ~ 07-10)",
+  "dday": 174,
   "ai_engine": "claude-sonnet-4",
   "bms": {
     "execRate": 42.52,
@@ -19,5 +19,5 @@
     "plannedRate": 80.4
   },
   "issues": 5,
-  "filename": "주간진도보고서_2026-07-03_W27.docx"
+  "filename": "주간진도보고서_2026-07-10_W28.docx"
 }
