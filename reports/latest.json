@@ -1,11 +1,11 @@
 {
-  "generated": "2026-08-21T17:41:47.808Z",
-  "week": "W34 (08-17 ~ 08-21)",
-  "dday": 132,
+  "generated": "2026-08-29T04:57:13.386Z",
+  "week": "W35 (08-24 ~ 08-28)",
+  "dday": 125,
   "ai_engine": "claude-sonnet-4",
   "bms": {
-    "execRate": 42.52,
-    "totalExec": 102.05027657,
+    "execRate": 45.64,
+    "totalExec": 109.52541623,
     "totalBudget": 240
   },
   "wbs": {
@@ -19,5 +19,5 @@
     "plannedRate": 81.6
   },
   "issues": 5,
-  "filename": "주간진도보고서_2026-08-21_W34.docx"
+  "filename": "주간진도보고서_2026-08-29_W35.docx"
 }
