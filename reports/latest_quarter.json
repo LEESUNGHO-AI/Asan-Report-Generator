@@ -1,21 +1,21 @@
 {
   "type": "quarter",
-  "generated": "2026-07-02T09:11:07.031Z",
-  "period": "2026년 3분기",
+  "generated": "2026-10-02T10:53:10.194Z",
+  "period": "2026년 4분기",
   "bms": {
-    "execRate": 42.52,
-    "totalExec": 102.05027657
+    "execRate": 45.66,
+    "totalExec": 109.57465335
   },
   "wbs": {
     "total": 175,
-    "done": 106,
-    "inProg": 49,
-    "delayed": 11,
-    "waiting": 9,
-    "actualRate": 65.5,
-    "achieveRate": 60.6,
-    "plannedRate": 80.4
+    "done": 116,
+    "inProg": 41,
+    "delayed": 10,
+    "waiting": 8,
+    "actualRate": 79.1,
+    "achieveRate": 66.3,
+    "plannedRate": 83.4
   },
   "ai_engine": "claude-sonnet-4",
-  "filename": "3분기보고서_2026-07-02.docx"
+  "filename": "4분기보고서_2026-10-02.docx"
 }
