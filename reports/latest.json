@@ -1,11 +1,11 @@
 {
-  "generated": "2026-10-02T23:31:36.337Z",
-  "week": "W40 (09-28 ~ 10-02)",
-  "dday": 90,
+  "generated": "2026-10-10T00:02:40.914Z",
+  "week": "W41 (10-05 ~ 10-09)",
+  "dday": 83,
   "ai_engine": "claude-sonnet-4",
   "bms": {
     "execRate": 45.66,
-    "totalExec": 109.57465335,
+    "totalExec": 109.57495335,
     "totalBudget": 240
   },
   "wbs": {
@@ -19,5 +19,5 @@
     "plannedRate": 83.4
   },
   "issues": 5,
-  "filename": "주간진도보고서_2026-10-02_W40.docx"
+  "filename": "주간진도보고서_2026-10-10_W41.docx"
 }
