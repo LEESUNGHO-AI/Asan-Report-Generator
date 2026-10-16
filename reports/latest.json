@@ -1,11 +1,11 @@
 {
-  "generated": "2026-10-10T00:02:40.914Z",
-  "week": "W41 (10-05 ~ 10-09)",
-  "dday": 83,
+  "generated": "2026-10-16T22:03:46.767Z",
+  "week": "W42 (10-12 ~ 10-16)",
+  "dday": 76,
   "ai_engine": "claude-sonnet-4",
   "bms": {
-    "execRate": 45.66,
-    "totalExec": 109.57495335,
+    "execRate": 54.58,
+    "totalExec": 130.99497835,
     "totalBudget": 240
   },
   "wbs": {
@@ -18,6 +18,6 @@
     "achieveRate": 66.3,
     "plannedRate": 83.4
   },
-  "issues": 5,
-  "filename": "주간진도보고서_2026-10-10_W41.docx"
+  "issues": 4,
+  "filename": "주간진도보고서_2026-10-16_W42.docx"
 }
