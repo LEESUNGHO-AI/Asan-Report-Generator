@@ -1,23 +1,23 @@
 {
-  "generated": "2026-10-23T22:09:42.376Z",
-  "week": "W43 (10-19 ~ 10-23)",
-  "dday": 69,
+  "generated": "2026-10-30T23:53:29.301Z",
+  "week": "W44 (10-26 ~ 10-30)",
+  "dday": 62,
   "ai_engine": "claude-sonnet-4",
   "bms": {
-    "execRate": 66,
-    "totalExec": 158.39503639,
+    "execRate": 65.99,
+    "totalExec": 158.38407901,
     "totalBudget": 240
   },
   "wbs": {
-    "total": 175,
-    "done": 116,
-    "inProg": 41,
+    "total": 185,
+    "done": 122,
+    "inProg": 46,
     "delayed": 10,
-    "waiting": 8,
-    "actualRate": 79.1,
-    "achieveRate": 66.3,
-    "plannedRate": 83.4
+    "waiting": 7,
+    "actualRate": 73.7,
+    "achieveRate": 65.9,
+    "plannedRate": 77.4
   },
   "issues": 4,
-  "filename": "주간진도보고서_2026-10-23_W43.docx"
+  "filename": "주간진도보고서_2026-10-30_W44.docx"
 }
