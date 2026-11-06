@@ -1,7 +1,7 @@
 {
-  "generated": "2026-10-30T23:53:29.301Z",
-  "week": "W44 (10-26 ~ 10-30)",
-  "dday": 62,
+  "generated": "2026-11-07T00:44:37.422Z",
+  "week": "W45 (11-02 ~ 11-06)",
+  "dday": 55,
   "ai_engine": "claude-sonnet-4",
   "bms": {
     "execRate": 65.99,
@@ -19,5 +19,5 @@
     "plannedRate": 77.4
   },
   "issues": 4,
-  "filename": "주간진도보고서_2026-10-30_W44.docx"
+  "filename": "주간진도보고서_2026-11-07_W45.docx"
 }
